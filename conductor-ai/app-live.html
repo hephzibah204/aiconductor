@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Conductor AI · Live</title>
+<!-- Supabase JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07090D;--surface:#0C1018;--surface2:#121820;--surface3:#1A2230;
+  --border:#1E2A3A;--border2:#283848;
+  --ink:#E8E0D0;--ink2:#98908080;--ink3:#58606870;
+  --amber:#F5A623;--amber2:#E8920A;--ag:rgba(245,166,35,0.12);
+  --green:#22C55E;--gg:rgba(34,197,94,0.10);
+  --red:#EF4444;--rg:rgba(239,68,68,0.10);
+  --blue:#3B82F6;--bg2:rgba(59,130,246,0.10);
+  --r:12px;--nav:60px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:'Instrument Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 20% 0%,rgba(245,166,35,0.05) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 100%,rgba(34,197,94,0.04) 0%,transparent 60%);pointer-events:none;z-index:0}
+
+/* ── SETUP MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:32px;max-width:500px;width:100%;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.modal-title{font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;color:var(--amber);margin-bottom:6px;letter-spacing:-.5px}
+.modal-sub{font-size:13px;color:var(--ink2);margin-bottom:24px;line-height:1.6}
+.modal-label{font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.modal-input{width:100%;padding:12px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;margin-bottom:14px;transition:border-color .2s}
+.modal-input:focus{border-color:var(--amber)}
+.modal-input::placeholder{color:var(--ink3)}
+.modal-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--amber),var(--amber2));border:none;border-radius:10px;color:#07090D;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.5px;box-shadow:0 4px 20px rgba(245,166,35,.3);transition:all .2s;margin-top:4px}
+.modal-btn:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(245,166,35,.4)}
+.modal-link{display:block;text-align:center;font-size:12px;color:var(--ink3);margin-top:14px}
+.modal-link a{color:var(--amber);text-decoration:none}
+.modal-step{display:flex;gap:10px;margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)}
+.modal-step-num{width:24px;height:24px;border-radius:50%;background:var(--amber);color:#07090D;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.modal-step-txt{font-size:12px;color:var(--ink2);line-height:1.6}
+.modal-step-txt strong{color:var(--ink)}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--nav);background:rgba(7,9,13,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.brand{display:flex;align-items:center;gap:10px;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;color:var(--amber);cursor:pointer;letter-spacing:-.3px}
+.brand-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--amber),var(--amber2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 14px rgba(245,166,35,.3)}
+.nav-tabs{display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px}
+.ntab{padding:6px 12px;border-radius:6px;border:none;background:transparent;color:var(--ink3);font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.ntab.on{background:var(--surface3);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.ntab:hover:not(.on){color:var(--ink2)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.live-pill{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.auth-btn{padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--ink2);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+.auth-btn:hover{border-color:var(--amber);color:var(--amber)}
+.auth-btn.signed{border-color:rgba(34,197,94,.3);color:var(--green);background:var(--gg)}
+
+/* ── PAGES ── */
+.page{display:none;min-height:100vh;padding-top:var(--nav);position:relative;z-index:1}
+.page.on{display:block}
+
+/* ── HOME ── */
+.hero{max-width:680px;margin:0 auto;padding:56px 20px 40px;text-align:center}
+.hero-badge{display:inline-flex;align-items:center;gap:7px;background:var(--ag);border:1px solid rgba(245,166,35,.25);border-radius:99px;padding:6px 16px;font-size:11px;font-weight:700;color:var(--amber);letter-spacing:.5px;margin-bottom:22px}
+.hero h1{font-family:'Unbounded',sans-serif;font-size:clamp(30px,7vw,58px);font-weight:900;letter-spacing:-2px;line-height:1.05;margin-bottom:14px;background:linear-gradient(135deg,var(--ink) 0%,rgba(232,224,208,.6) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--amber),var(--amber2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:15px;color:var(--ink2);line-height:1.7;max-width:460px;margin:0 auto 28px}
+.hero-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn-p{padding:13px 26px;background:linear-gradient(135deg,var(--amber),var(--amber2));border:none;border-radius:10px;color:#07090D;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;box-shadow:0 4px 20px rgba(245,166,35,.3);transition:all .2s}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(245,166,35,.4)}
+.btn-s{padding:13px 26px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-s:hover{border-color:var(--amber);color:var(--amber)}
+
+/* Stats */
+.stats{display:flex;max-width:680px;margin:36px auto 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.stat{flex:1;padding:18px;text-align:center;border-right:1px solid var(--border)}
+.stat:last-child{border-right:none}
+.stat-n{font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;color:var(--amber);letter-spacing:-1px}
+.stat-l{font-size:11px;color:var(--ink3);margin-top:3px;font-weight:500}
+
+/* Live feed strip */
+.live-strip{max-width:780px;margin:32px auto 0;padding:0 20px}
+.strip-label{font-size:10px;font-weight:700;color:var(--ink3);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.strip-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.strip-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.strip-scroll::-webkit-scrollbar{display:none}
+.strip-card{flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;width:220px}
+.strip-city{font-size:10px;font-weight:700;color:var(--amber);letter-spacing:1px;margin-bottom:4px}
+.strip-txt{font-size:12px;color:var(--ink2);line-height:1.5}
+.strip-time{font-size:10px;color:var(--ink3);margin-top:6px;font-family:'JetBrains Mono',monospace}
+
+/* Feature grid */
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;max-width:780px;margin:32px auto 0;padding:0 20px 60px}
+.feat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.feat::after{content:'';position:absolute;inset:0;background:var(--ag);opacity:0;transition:.25s}
+.feat:hover{border-color:rgba(245,166,35,.35);transform:translateY(-2px)}
+.feat:hover::after{opacity:1}
+.feat-i{font-size:26px;margin-bottom:10px}
+.feat-t{font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;color:var(--ink);margin-bottom:5px;letter-spacing:-.2px}
+.feat-d{font-size:12px;color:var(--ink3);line-height:1.6}
+
+/* ── TRAFFIC PAGE ── */
+.page-wrap{max-width:560px;margin:0 auto;padding:28px 20px 60px}
+.ph{margin-bottom:20px}
+.ph h2{font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900;letter-spacing:-.5px;color:var(--ink);margin-bottom:3px}
+.ph p{font-size:13px;color:var(--ink3)}
+.city-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:18px;scrollbar-width:none}
+.city-row::-webkit-scrollbar{display:none}
+.cpill{flex-shrink:0;padding:7px 14px;border:1.5px solid var(--border);border-radius:99px;background:var(--surface);color:var(--ink3);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.cpill.on{border-color:var(--amber);background:var(--ag);color:var(--amber)}
+
+/* Route card */
+.rcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.il{font-size:10px;font-weight:700;color:var(--ink3);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.ac-wrap{position:relative}
+.ri{width:100%;padding:11px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;color:var(--ink);font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.ri:focus{border-color:var(--amber)}
+.ri::placeholder{color:var(--ink3)}
+.sugg{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface2);border:1px solid var(--border);border-radius:9px;overflow:hidden;z-index:50;box-shadow:0 8px 32px rgba(0,0,0,.4);max-height:180px;overflow-y:auto;display:none}
+.sugg-i{padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);color:var(--ink2);display:flex;align-items:center;gap:8px;transition:background .15s}
+.sugg-i:last-child{border-bottom:none}
+.sugg-i:hover{background:var(--ag);color:var(--amber)}
+.swap{align-self:center;width:34px;height:34px;background:var(--surface2);border:1px solid var(--border);border-radius:50%;cursor:pointer;color:var(--amber);font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.swap:hover{background:var(--ag);border-color:var(--amber)}
+.cbtn{width:100%;padding:13px;background:linear-gradient(135deg,var(--amber),var(--amber2));border:none;border-radius:9px;color:#07090D;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;box-shadow:0 4px 16px rgba(245,166,35,.25);transition:all .2s}
+.cbtn:hover:not(:disabled){transform:translateY(-1px)}
+.cbtn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+/* Result */
+.res-card{border-radius:var(--r);padding:18px;margin-top:14px;border:2px solid;animation:su .35s ease}
+@keyframes su{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.res-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.res-badge{display:inline-block;padding:3px 11px;border-radius:99px;font-family:'Unbounded',sans-serif;font-size:9px;font-weight:700;letter-spacing:1px}
+.res-eta{font-family:'Unbounded',sans-serif;font-size:30px;font-weight:900;line-height:1;letter-spacing:-1px}
+.res-dist{font-size:11px;color:var(--ink3);margin-top:2px}
+.pidgin{padding:11px 13px;border-radius:9px;background:rgba(0,0,0,.3);font-size:13px;line-height:1.6;color:var(--ink2);border-left:3px solid;margin-bottom:14px}
+.fare-g{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.fare-item{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:11px;display:flex;align-items:center;gap:9px}
+.fare-ico{font-size:19px}
+.fare-nm{font-size:10px;color:var(--ink3);font-weight:500}
+.fare-pr{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:var(--amber);margin-top:1px}
+.inner-tabs{display:flex;gap:5px;margin-bottom:12px}
+.itab{padding:7px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--ink3);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+.itab.on{background:var(--ag);border-color:rgba(245,166,35,.35);color:var(--amber)}
+.tip-i{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;font-size:13px;color:var(--ink2);line-height:1.6;margin-bottom:7px;border-left:3px solid var(--border2)}
+.alert-strip{background:var(--rg);border:1px solid rgba(239,68,68,.25);border-radius:9px;padding:11px 14px;font-size:12px;color:#FCA5A5;display:flex;gap:8px;align-items:flex-start;margin-bottom:10px}
+
+/* ── CHAT PAGE ── */
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - var(--nav));max-width:680px;margin:0 auto}
+.chat-hdr{padding:14px 20px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.agent-av{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--amber),var(--amber2));display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 4px 14px rgba(245,166,35,.3)}
+.agent-nm{font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;color:var(--amber)}
+.agent-st{font-size:11px;color:var(--ink3);margin-top:2px}
+.mode-pills{display:flex;gap:5px}
+.mpill{padding:5px 11px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--ink3);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s}
+.mpill.ma{border-color:var(--amber);background:var(--ag);color:var(--amber)}
+.mpill.mq{border-color:var(--green);background:var(--gg);color:var(--green)}
+.mpill.mr{border-color:var(--red);background:var(--rg);color:var(--red)}
+.msgs{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.msg-row{display:flex;gap:8px;align-items:flex-end}
+.msg-row.u{flex-direction:row-reverse}
+.mav{width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--surface2);border:1px solid var(--border)}
+.mbub{max-width:76%;padding:11px 15px;border-radius:14px;font-size:14px;line-height:1.7;animation:su .3s ease}
+.mbub.ai{background:var(--surface);border:1px solid var(--border);border-radius:14px 14px 14px 3px;color:var(--ink2)}
+.mbub.usr{background:linear-gradient(135deg,var(--amber),var(--amber2));color:#07090D;font-weight:600;border-radius:14px 14px 3px 14px}
+.mtime{font-size:10px;color:var(--ink3);margin-top:3px;padding:0 3px}
+.typing{display:flex;gap:4px;align-items:center;padding:3px 0}
+.tdot{width:7px;height:7px;border-radius:50%;background:var(--amber);opacity:.7;animation:bounce 1.2s ease infinite}
+.tdot:nth-child(2){animation-delay:.2s}
+.tdot:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-7px)}}
+.qchips{padding:0 20px 8px;display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.qchips::-webkit-scrollbar{display:none}
+.qchip{flex-shrink:0;padding:7px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;color:var(--ink2);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .2s}
+.qchip:hover{border-color:var(--amber);color:var(--amber)}
+.chat-foot{padding:10px 20px 18px;border-top:1px solid var(--border);flex-shrink:0}
+.chat-row{display:flex;gap:9px;align-items:flex-end}
+.chat-ta{flex:1;padding:11px 15px;background:var(--surface2);border:1.5px solid var(--border);border-radius:11px;color:var(--ink);font-family:'Instrument Sans',sans-serif;font-size:14px;line-height:1.5;resize:none;outline:none;max-height:110px;transition:border-color .2s}
+.chat-ta:focus{border-color:var(--amber)}
+.chat-ta::placeholder{color:var(--ink3)}
+.send{width:42px;height:42px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,var(--amber),var(--amber2));border:none;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(245,166,35,.3);transition:all .2s}
+.send:hover{transform:scale(1.05)}
+.send:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.score-b{background:var(--gg);border:1px solid rgba(34,197,94,.3);border-radius:99px;padding:4px 11px;font-size:11px;color:var(--green);font-weight:600}
+
+/* ── REPORT PAGE ── */
+.rep-wrap{max-width:520px;margin:0 auto;padding:28px 20px 60px}
+.prog-wrap{margin-bottom:24px}
+.prog-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-bottom:7px;font-weight:600;letter-spacing:.5px}
+.prog-track{height:3px;background:var(--border);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--amber2));border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.sdots{display:flex;gap:5px;justify-content:center;margin-top:9px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--border);transition:all .3s}
+.dot.on{background:var(--amber);transform:scale(1.3)}
+.dot.dn{background:var(--green)}
+.rc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:12px;animation:su .35s ease}
+.rsl{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--amber);text-transform:uppercase;margin-bottom:7px}
+.rq{font-family:'Unbounded',sans-serif;font-size:17px;font-weight:700;color:var(--ink);line-height:1.3;letter-spacing:-.3px;margin-bottom:4px}
+.rsub{font-size:12px;color:var(--ink3);margin-bottom:18px}
+.og{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.og3{grid-template-columns:1fr 1fr 1fr}
+.og1{grid-template-columns:1fr}
+.ob{padding:13px 9px;border:2px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink2);font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;text-align:center;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:4px}
+.ob .oi{font-size:20px}
+.ob:hover{border-color:var(--amber);background:var(--ag);color:var(--ink)}
+.ob.sel{border-color:var(--amber);background:var(--ag);color:var(--amber)}
+.ri2{width:100%;padding:11px 14px;background:var(--surface2);border:2px solid var(--border);border-radius:9px;color:var(--ink);font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.ri2:focus{border-color:var(--amber)}
+.ri2::placeholder{color:var(--ink3)}
+.fw{position:relative}
+.fsym{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-family:'Unbounded',sans-serif;font-size:17px;font-weight:700;color:var(--amber);pointer-events:none}
+.fb{padding-left:36px;font-family:'Unbounded',sans-serif;font-size:22px;font-weight:700}
+.rchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.rch{padding:6px 13px;border:1.5px solid var(--border);border-radius:99px;background:var(--surface2);font-size:12px;font-weight:600;color:var(--ink3);cursor:pointer;transition:all .2s}
+.rch:hover,.rch.sel{border-color:var(--amber);background:var(--ag);color:var(--amber)}
+.rnav{display:flex;gap:7px;margin-top:16px}
+.rbk{padding:11px 16px;border:1.5px solid var(--border);border-radius:9px;background:transparent;color:var(--ink3);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.rbk:hover{border-color:var(--ink2);color:var(--ink2)}
+.rnxt{flex:1;padding:12px;background:linear-gradient(135deg,var(--amber),var(--amber2));border:none;border-radius:9px;color:#07090D;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.5px;box-shadow:0 4px 14px rgba(245,166,35,.2);transition:all .2s}
+.rnxt:hover:not(:disabled){transform:translateY(-1px)}
+.rnxt:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.ibox{padding:11px 13px;border-radius:9px;background:var(--ag);border:1px solid rgba(245,166,35,.2);font-size:12px;color:rgba(245,166,35,.9);display:flex;gap:7px;margin-bottom:14px;line-height:1.6}
+.sumr{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.sumr:last-child{border-bottom:none}
+.suml{font-size:10px;color:var(--ink3);font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.sumv{font-weight:600;color:var(--ink)}
+.sumf{font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;color:var(--amber)}
+.suc-w{text-align:center;padding:16px 0}
+.suc-i{width:68px;height:68px;border-radius:50%;background:var(--gg);border:1px solid rgba(34,197,94,.3);display:flex;align-items:center;justify-content:center;font-size:34px;margin:0 auto 16px;animation:popIn .5s cubic-bezier(.175,.885,.32,1.275)}
+.suc-t{font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;color:var(--ink);margin-bottom:6px;letter-spacing:-.5px}
+.suc-m{font-size:13px;color:var(--ink3);line-height:1.6;margin-bottom:18px;max-width:300px;margin-left:auto;margin-right:auto}
+.pb{display:inline-block;background:var(--ag);border:1px solid rgba(245,166,35,.25);border-radius:99px;padding:7px 18px;font-size:13px;color:var(--amber);font-weight:600;margin-bottom:22px}
+.wbtn{width:100%;padding:13px;background:linear-gradient(135deg,#25D366,#128C7E);border:none;border-radius:9px;color:#fff;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;cursor:pointer;margin-bottom:8px;letter-spacing:.5px;box-shadow:0 4px 18px rgba(37,211,102,.22);transition:all .2s}
+.wbtn:hover{transform:translateY(-1px)}
+.restbtn{width:100%;padding:12px;background:transparent;border:1.5px solid var(--border);border-radius:9px;color:var(--ink3);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.restbtn:hover{border-color:var(--ink2);color:var(--ink2)}
+
+/* ── LEADERBOARD ── */
+.lb-wrap{max-width:620px;margin:0 auto;padding:28px 20px 60px}
+.lbf{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.lbfb{padding:6px 13px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--ink3);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.lbfb.on{background:var(--ag);border-color:rgba(245,166,35,.35);color:var(--amber)}
+.lbrc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .2s}
+.lbrc:hover{border-color:var(--border2)}
+.lbrk{font-family:'Unbounded',sans-serif;font-size:12px;font-weight:900;color:var(--ink3);width:22px;flex-shrink:0}
+.lbrk.g{color:#FFD700}
+.lbrk.s{color:#C0C0C0}
+.lbrk.b{color:#CD7F32}
+.lbri{flex:1}
+.lbrn{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.lbrm{font-size:11px;color:var(--ink3)}
+.lbrf{text-align:right;flex-shrink:0}
+.lbra{font-family:'Unbounded',sans-serif;font-size:15px;font-weight:900;color:var(--amber)}
+.lbrt{font-size:10px;font-weight:700;margin-top:2px}
+.tup{color:var(--red)}
+.tdn{color:var(--green)}
+.tsm{color:var(--ink3)}
+
+/* ── COMMUNITY ── */
+.com-wrap{max-width:620px;margin:0 auto;padding:28px 20px 60px}
+.post-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:18px}
+.feed-post{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:9px;animation:su .3s ease}
+.fp-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.fp-av{width:30px;height:30px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--amber);flex-shrink:0}
+.fp-nm{font-size:13px;font-weight:600;color:var(--ink)}
+.fp-meta{font-size:11px;color:var(--ink3)}
+.fp-txt{font-size:13px;color:var(--ink2);line-height:1.65;margin-bottom:11px}
+.fp-acts{display:flex;align-items:center;gap:11px}
+.fp-like{display:flex;align-items:center;gap:4px;background:none;border:none;color:var(--ink3);cursor:pointer;font-size:12px;font-weight:600;padding:0;transition:color .2s}
+.fp-like.liked{color:var(--red)}
+.fp-share{margin-left:auto;background:none;border:none;color:var(--ink3);cursor:pointer;font-size:12px;font-weight:600;transition:color .2s}
+.fp-share:hover{color:var(--amber)}
+
+/* ── PROFILE ── */
+.prof-wrap{max-width:520px;margin:0 auto;padding:28px 20px 60px}
+.prof-hdr{text-align:center;padding:28px 0 22px}
+.prof-av{width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,var(--amber),var(--amber2));display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 11px;box-shadow:0 8px 28px rgba(245,166,35,.28)}
+.prof-nm{font-family:'Unbounded',sans-serif;font-size:17px;font-weight:900;color:var(--ink);letter-spacing:-.5px}
+.prof-role{font-size:13px;color:var(--ink3);margin-top:3px}
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:12px}
+.pcard-lbl{font-size:10px;font-weight:700;color:var(--ink3);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.pstat-g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pstat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.pstat-n{font-family:'Unbounded',sans-serif;font-size:19px;font-weight:900;color:var(--amber)}
+.pstat-l{font-size:11px;color:var(--ink3);margin-top:2px}
+.badges{display:flex;flex-wrap:wrap;gap:8px}
+.badge-item{display:flex;flex-direction:column;align-items:center;gap:3px}
+.badge-ico{width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:21px}
+.badge-nm{font-size:10px;color:var(--ink3);text-align:center;max-width:50px;line-height:1.3}
+
+/* ── TOAST ── */
+#toasts{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:9990;display:flex;flex-direction:column;gap:7px;align-items:center;pointer-events:none}
+.toast{padding:11px 18px;border-radius:9px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px;pointer-events:auto;animation:su .3s ease;backdrop-filter:blur(16px);box-shadow:0 8px 28px rgba(0,0,0,.35);max-width:300px;font-family:'JetBrains Mono',monospace;letter-spacing:.3px}
+
+/* ── REALTIME BADGE ── */
+.rt-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace}
+
+/* Scrollbars */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+@media(max-width:560px){
+  .nav-tabs{display:none}
+  .stats{flex-wrap:wrap}
+  .stat{min-width:50%;border-bottom:1px solid var(--border)}
+}
+</style>
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#F5A623"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Conductor AI"/>
+</head>
+<body>
+
+<!-- SETUP MODAL -->
+<div class="modal-overlay" id="setupModal">
+  <div class="modal-box">
+    <div class="modal-title">🚌 Connect Conductor AI</div>
+    <div class="modal-sub">Enter your Supabase credentials to activate real-time data, user auth, and live AI updates.</div>
+
+    <div class="modal-step">
+      <div class="modal-step-num">1</div>
+      <div class="modal-step-txt">Go to <strong>supabase.com</strong> → New Project → copy your <strong>Project URL</strong> and <strong>anon public key</strong> from Settings → API</div>
+    </div>
+    <div class="modal-step">
+      <div class="modal-step-num">2</div>
+      <div class="modal-step-txt">Run the SQL schema below in your Supabase <strong>SQL Editor</strong> to create all tables</div>
+    </div>
+    <div class="modal-step">
+      <div class="modal-step-num">3</div>
+      <div class="modal-step-txt">Deploy the Edge Functions from the setup guide to handle AI agent calls via <strong>OpenRouter</strong></div>
+    </div>
+
+    <div class="modal-label">Supabase Project URL</div>
+    <input class="modal-input" id="sbUrl" placeholder="https://xxxx.supabase.co" type="url"/>
+
+    <div class="modal-label">Supabase Anon Key</div>
+    <input class="modal-input" id="sbKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6Ikp..." type="password"/>
+
+    <button class="modal-btn" onclick="connectSupabase()">⚡ Connect & Launch App</button>
+    <div class="modal-link">Don't have Supabase? <a href="https://supabase.com" target="_blank">Create free account →</a></div>
+    <div class="modal-link" style="margin-top:8px"><a href="#" onclick="demoMode()">▶ Run in demo mode (no Supabase)</a></div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toasts"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="brand" onclick="goPage('home')">
+    <div class="brand-icon">🚌</div>
+    Conductor
+  </div>
+  <div class="nav-tabs">
+    <button class="ntab on" id="tab-home" onclick="goPage('home')">Home</button>
+    <button class="ntab" id="tab-traffic" onclick="goPage('traffic')">Traffic</button>
+    <button class="ntab" id="tab-chat" onclick="goPage('chat')">AI Chat</button>
+    <button class="ntab" id="tab-report" onclick="goPage('report')">Report</button>
+    <button class="ntab" id="tab-fares" onclick="goPage('fares')">Fares</button>
+    <button class="ntab" id="tab-community" onclick="goPage('community')">Feed</button>
+    <button class="ntab" id="tab-profile" onclick="goPage('profile')">Profile</button>
+  </div>
+  <div class="nav-right">
+    <div class="live-pill"><div class="live-dot"></div><span id="liveLabel">LIVE</span></div>
+    <button class="auth-btn" id="authBtn" onclick="handleAuth()">Sign In</button>
+  </div>
+  <div class="nav-right" style="display:flex;align-items:center;gap:8px">
+    <a href="index.html" style="padding:5px 11px;border-radius:7px;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.2);color:#F5A623;font-size:11px;font-weight:700;text-decoration:none">📱 Main App</a>
+    <a href="admin.html" style="padding:5px 11px;border-radius:7px;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);color:#00D4FF;font-size:11px;font-weight:700;text-decoration:none">⚙️ Admin</a>
+    <a href="setup-guide.html" style="padding:5px 11px;border-radius:7px;background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);color:#A855F7;font-size:11px;font-weight:700;text-decoration:none">📚 Docs</a>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div class="page on" id="page-home">
+  <div class="hero">
+    <div class="hero-badge">🇳🇬 Powered by Supabase + OpenRouter</div>
+    <h1>Who Sabi<br/><em>Road?</em></h1>
+    <div class="hero-sub">Real-time Nigerian transport data. AI-powered fare estimates. Crowdsourced by the community — live.</div>
+    <div class="hero-cta">
+      <button class="btn-p" onclick="goPage('traffic')">🔮 Check Traffic</button>
+      <button class="btn-s" onclick="goPage('chat')">💬 Ask AI</button>
+    </div>
+  </div>
+  <div class="stats" id="homeStats">
+    <div class="stat"><div class="stat-n" id="sReports">—</div><div class="stat-l">Fares Reported</div></div>
+    <div class="stat"><div class="stat-n" id="sUsers">—</div><div class="stat-l">Contributors</div></div>
+    <div class="stat"><div class="stat-n">5</div><div class="stat-l">Cities Live</div></div>
+    <div class="stat"><div class="stat-n" id="sFeed">—</div><div class="stat-l">Feed Posts</div></div>
+  </div>
+  <div class="live-strip">
+    <div class="strip-label">LIVE TRAFFIC UPDATES <span class="rt-badge" style="background:var(--rg);border:1px solid rgba(239,68,68,.2);color:var(--red)"><div class="live-dot" style="width:5px;height:5px;margin-right:2px"></div>REALTIME</span></div>
+    <div class="strip-scroll" id="liveTrafficStrip">
+      <div class="strip-card"><div class="strip-city">LOADING...</div><div class="strip-txt">Connecting to live data...</div></div>
+    </div>
+  </div>
+  <div class="feat-grid">
+    <div class="feat" onclick="goPage('traffic')"><div class="feat-i">🔮</div><div class="feat-t">Traffic Oracle</div><div class="feat-d">Real-time traffic across 5 cities with Pidgin alerts.</div></div>
+    <div class="feat" onclick="goPage('chat')"><div class="feat-i">🤖</div><div class="feat-t">AI Fare Chat</div><div class="feat-d">Ask anything — AI searches live fare data to answer.</div></div>
+    <div class="feat" onclick="goPage('report')"><div class="feat-i">📍</div><div class="feat-t">Report Fare</div><div class="feat-d">Contribute real fares. Earn Conductor Points.</div></div>
+    <div class="feat" onclick="goPage('fares')"><div class="feat-i">📊</div><div class="feat-t">Fare Index</div><div class="feat-d">Most expensive routes, best deals, trending changes.</div></div>
+    <div class="feat" onclick="goPage('community')"><div class="feat-i">📢</div><div class="feat-t">Community Feed</div><div class="feat-d">Live road gist from Nigerians on the road right now.</div></div>
+    <div class="feat" onclick="goPage('profile')"><div class="feat-i">👤</div><div class="feat-t">My Profile</div><div class="feat-d">Saved routes, badges, points, contribution score.</div></div>
+  </div>
+</div>
+
+<!-- TRAFFIC -->
+<div class="page" id="page-traffic">
+  <div class="page-wrap">
+    <div class="ph"><h2>Traffic Oracle</h2><p>AI-powered route check for Nigerian roads</p></div>
+    <div class="city-row" id="tcityRow">
+      <button class="cpill on" onclick="selTCity('Lagos',this)">🌊 Lagos</button>
+      <button class="cpill" onclick="selTCity('Abuja',this)">🏛️ Abuja</button>
+      <button class="cpill" onclick="selTCity('Port Harcourt',this)">⛽ PH</button>
+      <button class="cpill" onclick="selTCity('Kano',this)">🕌 Kano</button>
+      <button class="cpill" onclick="selTCity('Ibadan',this)">🌄 Ibadan</button>
+    </div>
+    <div id="tAlerts"></div>
+    <div class="rcard">
+      <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:14px">
+        <div><div class="il">From</div><div class="ac-wrap"><input class="ri" id="tFrom" placeholder="Departure area" oninput="handleAC('tFrom','tFromS',tCity)" autocomplete="off"/><div class="sugg" id="tFromS"></div></div></div>
+        <button class="swap" onclick="swapRoute('tFrom','tTo')">⇅</button>
+        <div><div class="il">To</div><div class="ac-wrap"><input class="ri" id="tTo" placeholder="Destination area" oninput="handleAC('tTo','tToS',tCity)" autocomplete="off"/><div class="sugg" id="tToS"></div></div></div>
+      </div>
+      <button class="cbtn" id="checkBtn" onclick="checkTraffic()" disabled>🔮 Check Road</button>
+    </div>
+    <div id="tResult"></div>
+    <div id="tTabs" style="display:none">
+      <div class="inner-tabs">
+        <button class="itab on" id="itFares" onclick="swTTab('fares')">💰 Fares</button>
+        <button class="itab" id="itTips" onclick="swTTab('tips')">🗺️ Tips</button>
+        <button class="itab" id="itAlt" onclick="swTTab('alt')">🔀 Alternatives</button>
+      </div>
+      <div id="tTabBody"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="page" id="page-chat">
+  <div class="chat-wrap">
+    <div class="chat-hdr">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="agent-av">🚌</div>
+        <div><div class="agent-nm">Conductor AI</div><div class="agent-st" id="agSt">🟢 Online · live data connected</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="score-b" id="qScore" style="display:none">✅ 0/0</div>
+        <div class="mode-pills">
+          <button class="mpill ma" id="pmA" onclick="setMode('a')">💰</button>
+          <button class="mpill" id="pmQ" onclick="setMode('q')">🎯</button>
+          <button class="mpill" id="pmR" onclick="setMode('r')">📍</button>
+        </div>
+      </div>
+    </div>
+    <div class="msgs" id="msgs"></div>
+    <div class="qchips" id="qchips">
+      <button class="qchip" onclick="sendMsg('How much is Keke from Ikeja to Oshodi?')">🛺 Keke Ikeja→Oshodi</button>
+      <button class="qchip" onclick="sendMsg('What is Uber surge during Lagos rain?')">🌧️ Rain surge</button>
+      <button class="qchip" onclick="setMode('q');sendMsg('Quiz me on Nigerian transport fares!')">🎯 Quiz me!</button>
+      <button class="qchip" onclick="sendMsg('Cheapest way from Lekki to Lagos Island?')">💸 Cheapest route</button>
+      <button class="qchip" onclick="sendMsg('What are Abuja transport fares?')">🏛️ Abuja fares</button>
+    </div>
+    <div class="chat-foot">
+      <div class="chat-row">
+        <textarea class="chat-ta" id="chatIn" placeholder="Ask about any Nigerian route..." rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,110)+'px';document.getElementById('sendBtn').disabled=!this.value.trim()"></textarea>
+        <button class="send" id="sendBtn" onclick="sendMsg()" disabled>➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div class="page" id="page-report">
+  <div class="rep-wrap">
+    <div class="ph"><h2>Report a Fare</h2><p>Help Nigerians with real transport data</p></div>
+    <div class="prog-wrap" id="rProgWrap">
+      <div class="prog-meta"><span id="rStepLbl">Step 1 of 9</span><span id="rPctLbl">11%</span></div>
+      <div class="prog-track"><div class="prog-fill" id="rFill" style="width:11%"></div></div>
+      <div class="sdots" id="rDots"></div>
+    </div>
+    <div id="rBody"></div>
+  </div>
+</div>
+
+<!-- FARES LEADERBOARD -->
+<div class="page" id="page-fares">
+  <div class="lb-wrap">
+    <div class="ph"><h2>Fare Index</h2><p>Most expensive routes · best deals · live trends</p></div>
+    <div class="alert-strip">🚨 <span id="surgeAlert">Loading surge alerts...</span></div>
+    <div class="lbf" id="lbFilters">
+      <button class="lbfb on" onclick="filterLB('all',this)">All Cities</button>
+      <button class="lbfb" onclick="filterLB('Lagos',this)">Lagos</button>
+      <button class="lbfb" onclick="filterLB('Abuja',this)">Abuja</button>
+      <button class="lbfb" onclick="filterLB('Port Harcourt',this)">PH</button>
+      <button class="lbfb" onclick="filterLB('Kano',this)">Kano</button>
+    </div>
+    <div id="lbBody"></div>
+  </div>
+</div>
+
+<!-- COMMUNITY -->
+<div class="page" id="page-community">
+  <div class="com-wrap">
+    <div class="ph"><h2>Community Feed</h2><p>Live reports from Nigerians on the road</p></div>
+    <div class="post-box">
+      <div style="font-size:11px;font-weight:700;color:var(--amber);letter-spacing:1px;margin-bottom:9px">SHARE A ROAD UPDATE</div>
+      <textarea id="postTxt" placeholder="Wetin dey happen for road? Share with your people..." style="width:100%;padding:11px;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;color:var(--ink);font-family:inherit;font-size:13px;resize:none;outline:none;line-height:1.6;margin-bottom:9px" rows="2" oninput="document.getElementById('postSubmit').disabled=!this.value.trim()"></textarea>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <select id="postCity" style="flex:1;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--ink);font-family:inherit;font-size:12px;outline:none;min-width:100px">
+          <option>Lagos</option><option>Abuja</option><option>Port Harcourt</option><option>Kano</option><option>Ibadan</option>
+        </select>
+        <select id="postType" style="flex:1;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--ink);font-family:inherit;font-size:12px;outline:none;min-width:100px">
+          <option value="traffic">🚦 Traffic</option>
+          <option value="fare">💰 Fare Update</option>
+          <option value="fuel">⛽ Fuel</option>
+          <option value="accident">🚨 Incident</option>
+          <option value="general">💬 General</option>
+        </select>
+        <button id="postSubmit" onclick="submitPost()" disabled style="padding:8px 16px;background:var(--amber);border:none;border-radius:8px;color:#07090D;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;opacity:.5;transition:opacity .2s" oninput="">Post</button>
+      </div>
+    </div>
+    <div class="lbf" id="feedFilters">
+      <button class="lbfb on" onclick="filterFeed('all',this)">All</button>
+      <button class="lbfb" onclick="filterFeed('traffic',this)">🚦 Traffic</button>
+      <button class="lbfb" onclick="filterFeed('fare',this)">💰 Fares</button>
+      <button class="lbfb" onclick="filterFeed('fuel',this)">⛽ Fuel</button>
+      <button class="lbfb" onclick="filterFeed('accident',this)">🚨 Incident</button>
+    </div>
+    <div id="feedBody"></div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div class="page" id="page-profile">
+  <div class="prof-wrap" id="profBody"></div>
+</div>
+
+<script>
+// ════════════ CONFIG ════════════
+const CITIES = {
+  Lagos:{emoji:'🌊',areas:['Ikeja','Victoria Island','Lekki','Surulere','Yaba','Oshodi','Ikorodu','Apapa','Ajah','Festac','Maryland','Ojota','Berger','Agege','Mushin','Lagos Island','Ojuelegba','Gbagada','Magodo','Mile 2','Alaba','CMS','Alausa','Chevron','Sangotedo'],fares:{keke:250,danfo:300,okada:400,taxi:1200,uber:1800},alerts:['⚡ LASTMA heavy on Apongbon bridge','🌧️ Rain expected 4pm — expect 3x time on Third Mainland','🚧 Road work on Ozumba Mbadiwe']},
+  Abuja:{emoji:'🏛️',areas:['Wuse','Garki','Maitama','Asokoro','Gwarinpa','Kubwa','Nyanya','Lugbe','Karu','Central Area','Area 1','Area 3','Gudu','Katampe','Jabi','Utako','Wuse 2','Apo','Lifecamp','Dei Dei'],fares:{keke:300,danfo:350,okada:450,taxi:1500,uber:2000},alerts:['🚦 Berger roundabout closed for repair','🏎️ Roads clear — good time to travel']},
+  'Port Harcourt':{emoji:'⛽',areas:['GRA Phase 1','GRA Phase 2','Rumuola','Diobu','Trans Amadi','Eleme','Rumuokoro','Mile 1','Mile 3','Borokiri','Old GRA','Rumuibekwe','Oyigbo','Waterlines','Ada George'],fares:{keke:200,danfo:250,okada:350,taxi:1100,uber:1600},alerts:['⛽ Fuel queue blocking Rumuokoro junction','🌊 Waterlines road flooded']},
+  Kano:{emoji:'🕌',areas:['Fagge','Gwale','Nasarawa','Tarauni','Kano City','Bompai','Sabon Gari','Yankaba','Zoo Road','Kurna','Dala'],fares:{keke:150,danfo:200,okada:250,taxi:800,uber:1200},alerts:['🕌 Heavy traffic after Jumat prayers 1–3pm']},
+  Ibadan:{emoji:'🌄',areas:['Bodija','Agodi','Mokola','Ring Road','Iwo Road','Challenge','Dugbe','Ojoo','Sango','Apata','Eleyele'],fares:{keke:150,danfo:200,okada:300,taxi:900,uber:1300},alerts:['🏎️ UI road clear today']},
+};
+const TMODES=[{id:'keke',icon:'🛺',name:'Keke NAPEP'},{id:'danfo',icon:'🚌',name:'Danfo / BRT'},{id:'okada',icon:'🏍️',name:'Okada'},{id:'taxi',icon:'🚕',name:'Yellow Cab'},{id:'uber',icon:'📱',name:'Uber / Bolt'}];
+const TSLOTS=['Early Morning (5–7am)','Morning Rush (7–9am)','Mid Morning (9–11am)','Afternoon (12–3pm)','Evening Rush (4–7pm)','Night (7pm+)'];
+const DUROPTS=[{id:'u15',icon:'⚡',label:'Under 15 min',mins:10},{id:'15-30',icon:'🚶',label:'15–30 min',mins:22},{id:'30-60',icon:'🕐',label:'30 min–1 hr',mins:45},{id:'1-2h',icon:'😐',label:'1–2 hours',mins:90},{id:'2-3h',icon:'😩',label:'2–3 hours',mins:150},{id:'3h+',icon:'💀',label:'Over 3 hrs',mins:210}];
+const PIDGINS={low:['Road dey clear! Zoom go, no waste time! 😎','E be like say Lagosians don sleep — road free!'],medium:['E dey move small small. Patience na key! 🙏','Traffic dey o but e no too bad. Manage am.'],high:['Omo! Road don choke — find another route abeg! 😩','E be like say everybody carry their wahala come road.'],severe:['GBEGE! Road don die. Stay where you are! 💀','Na only prayer go save you. Oya pray fast!']};
+const LSTYLES={low:{color:'#22C55E',bg:'rgba(34,197,94,0.12)',label:'FREE FLOW'},medium:{color:'#F59E0B',bg:'rgba(245,158,11,0.12)',label:'MOVING'},high:{color:'#F97316',bg:'rgba(249,115,22,0.12)',label:'HEAVY'},severe:{color:'#EF4444',bg:'rgba(239,68,68,0.12)',label:'GRIDLOCK'}};
+const PTHANKS=['E don do! You don help your fellow Nigerians! 🙌','Omo! Thank you die! This info go save people money!','You be real Naija hero! 🇳🇬','Na you dey lead! Thank you for the update! 🔥'];
+const LBDATA=[{rank:1,from:'Lekki',to:'Lagos Island',city:'Lagos',fare:3500,mode:'uber',icon:'📱',trend:'up',chg:'+12%'},{rank:2,from:'Kubwa',to:'Maitama',city:'Abuja',fare:2800,mode:'taxi',icon:'🚕',trend:'same',chg:'0%'},{rank:3,from:'Ikorodu',to:'CMS',city:'Lagos',fare:2500,mode:'uber',icon:'📱',trend:'up',chg:'+8%'},{rank:4,from:'Trans Amadi',to:'GRA Phase 2',city:'Port Harcourt',fare:2200,mode:'taxi',icon:'🚕',trend:'dn',chg:'-5%'},{rank:5,from:'Gwarinpa',to:'Central Area',city:'Abuja',fare:2000,mode:'uber',icon:'📱',trend:'up',chg:'+15%'},{rank:6,from:'Ajah',to:'Victoria Island',city:'Lagos',fare:1800,mode:'uber',icon:'📱',trend:'up',chg:'+20%'},{rank:7,from:'Apapa',to:'Ikeja',city:'Lagos',fare:1500,mode:'taxi',icon:'🚕',trend:'same',chg:'0%'},{rank:8,from:'Surulere',to:'Yaba',city:'Lagos',fare:250,mode:'keke',icon:'🛺',trend:'same',chg:'0%'}];
+const FEED_DEMO=[{id:1,user:'Tunde_Lagos',city:'Lagos',type:'traffic',time:'2 min ago',text:'Third Mainland Bridge go-slow don clear small. You fit enter now but careful.',likes:24,verified:true},{id:2,user:'AbujaMama',city:'Abuja',type:'fare',time:'8 min ago',text:'Uber from Maitama to Garki is now ₦2,800! Na the rain cause this surge.',likes:41,verified:false},{id:3,user:'PHBoy',city:'Port Harcourt',type:'fuel',time:'15 min ago',text:'NNPC for Rumuokoro don get fuel. Queue still long sha — about 45 mins wait.',likes:67,verified:false},{id:4,user:'LagosChic',city:'Lagos',type:'accident',time:'34 min ago',text:'🚨 Minor accident on Lekki-Epe Expressway near Chevron. One lane blocked.',likes:89,verified:true}];
+
+// ════════════ STATE ════════════
+let sb = null; // Supabase client
+let user = null;
+let isDemo = false;
+let tCity = 'Lagos';
+let tResult = null;
+let tActiveTab = 'fares';
+let chatHistory = [];
+let chatMode = 'a';
+let qScore = {c:0,t:0};
+let chatReady = false;
+let chatSessionId = localStorage.getItem('chat_sid') || null;
+let rStep = 0;
+const R_TOTAL = 9;
+let rData = {};
+let feedFilter = 'all';
+let feedPosts = [...FEED_DEMO];
+let userLikes = new Set(JSON.parse(localStorage.getItem('ulikes')||'[]'));
+let savedRoutes = JSON.parse(localStorage.getItem('sroutes')||'[]');
+let userProfile = JSON.parse(localStorage.getItem('uprof')||'{}');
+if (!userProfile.name) userProfile={name:'Naija Traveller',city:'Lagos',reports:0,points:0,streak:3};
+let lbFilter='all';
+
+// ════════════ SUPABASE CONNECT ════════════
+async function connectSupabase() {
+  const url = document.getElementById('sbUrl').value.trim();
+  const key = document.getElementById('sbKey').value.trim();
+  if (!url||!key) { toast('Enter both URL and API key','warn'); return; }
+  try {
+    sb = window.supabase.createClient(url,key);
+    // Test connection
+    const {error} = await sb.from('fare_reports').select('count',{count:'exact',head:true});
+    if (error && error.code!=='PGRST116') throw error;
+    localStorage.setItem('sb_url',url);
+    localStorage.setItem('sb_key',key);
+    document.getElementById('setupModal').style.display='none';
+    toast('✓ Connected to Supabase!','success');
+    await initApp();
+  } catch(e) {
+    toast('Connection failed: '+e.message,'error');
+  }
+}
+
+function demoMode() {
+  isDemo = true;
+  document.getElementById('setupModal').style.display='none';
+  toast('Running in demo mode — data is simulated','warn');
+  initApp();
+}
+
+async function initApp() {
+  // Auth state
+  if (sb) {
+    const {data:{session}} = await sb.auth.getSession();
+    if (session) setUser(session.user);
+    sb.auth.onAuthStateChange((_,s)=>{ s ? setUser(s.user) : clearUser(); });
+    // Realtime subscriptions
+    setupRealtime();
+    // Load stats
+    loadStats();
+    // Load real feed
+    loadFeed();
+    // Load likes + sync profile if signed in
+    if(user){syncProfile();loadLikes();}
+  } else {
+    // Demo stats
+    document.getElementById('sReports').textContent='2,841';
+    document.getElementById('sUsers').textContent='1,204';
+    document.getElementById('sFeed').textContent='387';
+  }
+  loadHomeStrip();
+  renderLB();
+  renderFeed();
+}
+
+async function loadFeed() {
+  if(!sb) return;
+  const {data, error} = await sb.from('feed_posts').select('id, content, city, type, username, likes, comments, verified_poster, created_at').order('created_at',{ascending:false}).limit(60);
+  if(error) return;
+  feedPosts = (data||[]).map(p=>({
+    id:p.id,
+    user:p.username||'Anonymous',
+    city:p.city,
+    type:p.type,
+    time:timeAgo(p.created_at),
+    text:p.content,
+    likes:p.likes||0,
+    comments:p.comments||0,
+    verified:!!p.verified_poster
+  }));
+  if(currentPage==='community') renderFeed();
+}
+
+async function syncProfile(){
+  if(!sb||!user) return;
+  const payload={id:user.id,username:(userProfile.name||'Anonymous').slice(0,60),city:userProfile.city||'Lagos',updated_at:new Date().toISOString()};
+  await sb.from('user_profiles').upsert(payload,{onConflict:'id'});
+}
+
+async function loadLikes(){
+  if(!sb||!user) return;
+  const {data}=await sb.from('post_likes').select('post_id').eq('user_id',user.id).limit(500);
+  if(data){
+    userLikes = new Set(data.map(x=>x.post_id));
+    localStorage.setItem('ulikes',JSON.stringify([...userLikes]));
+    if(currentPage==='community') renderFeed();
+  }
+}
+
+// ════════════ AUTH ════════════
+function setUser(u) {
+  user=u;
+  const btn=document.getElementById('authBtn');
+  btn.textContent=u.email?.split('@')[0]||'Profile';
+  btn.className='auth-btn signed';
+  userProfile.email=u.email;
+  localStorage.setItem('uprof',JSON.stringify(userProfile));
+  if(sb){syncProfile();loadLikes();}
+}
+function clearUser(){user=null;const btn=document.getElementById('authBtn');btn.textContent='Sign In';btn.className='auth-btn';}
+async function handleAuth() {
+  if (user) { goPage('profile'); return; }
+  if (isDemo) { toast('Sign up at supabase.com to enable auth','warn'); return; }
+  const email = prompt('Enter your email to sign in / sign up:');
+  if (!email) return;
+  const {error} = await sb.auth.signInWithOtp({email});
+  if (error) toast('Auth error: '+error.message,'error');
+  else toast('✓ Check your email for the magic link!','success');
+}
+
+// ════════════ REALTIME ════════════
+function setupRealtime() {
+  if (!sb) return;
+  // Live fare reports → update strip
+  sb.channel('fare_reports')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'fare_reports'}, payload=>{
+      toast(`New fare reported: ${payload.new.route_from} → ${payload.new.route_to}`,'success');
+      loadStats();
+    }).subscribe();
+  // Live feed posts
+  sb.channel('feed_posts')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'feed_posts'}, payload=>{
+      const p=payload.new;
+      if(p.moderated!==true) return;
+      if(p.removed===true||p.flagged===true) return;
+      feedPosts.unshift({id:p.id,user:p.username||'Anonymous',city:p.city,type:p.type,time:'Just now',text:p.content,likes:p.likes||0,verified:!!p.verified_poster});
+      if(currentPage==='community') renderFeed();
+      toast(`📢 New post from ${p.city}`,'info');
+    }).subscribe();
+  // Live traffic updates
+  sb.channel('traffic_updates')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'traffic_updates'}, payload=>{
+      loadHomeStrip();
+      if(currentPage==='traffic') renderTAlerts();
+    }).subscribe();
+  document.getElementById('liveLabel').textContent='LIVE ✓';
+}
+
+async function loadStats() {
+  if (!sb) return;
+  const [{count:r},{count:f}] = await Promise.all([
+    sb.from('fare_reports').select('*',{count:'exact',head:true}),
+    sb.from('feed_posts').select('*',{count:'exact',head:true}),
+  ]);
+  if(r!=null) document.getElementById('sReports').textContent=(r||0).toLocaleString();
+  if(f!=null) document.getElementById('sFeed').textContent=(f||0).toLocaleString();
+  // Unique users from fare reports
+  const {data:users} = await sb.from('fare_reports').select('user_id').not('user_id','is',null);
+  if(users) document.getElementById('sUsers').textContent=[...new Set(users.map(u=>u.user_id))].length.toLocaleString();
+}
+
+async function loadHomeStrip() {
+  let data;
+  if (sb) {
+    const {data:d}=await sb.from('traffic_updates').select('*').order('created_at',{ascending:false}).limit(6);
+    data=d;
+  }
+  if (!data||!data.length) {
+    // Demo data
+    data=[
+      {city:'Lagos',level:'severe',alert:'Third Mainland go-slow. E bad die!',created_at:new Date().toISOString()},
+      {city:'Abuja',level:'low',alert:'Roads clear for Maitama axis. Move now!',created_at:new Date().toISOString()},
+      {city:'Port Harcourt',level:'medium',alert:'Rumuola junction slow. Manage am.',created_at:new Date().toISOString()},
+      {city:'Kano',level:'low',alert:'After Jumat traffic done clear.',created_at:new Date().toISOString()},
+      {city:'Ibadan',level:'medium',alert:'Ring Road slow — UI road better option.',created_at:new Date().toISOString()},
+    ];
+  }
+  const lvlColors={severe:'var(--red)',high:'var(--amber2)',medium:'var(--amber)',low:'var(--green)'};
+  document.getElementById('liveTrafficStrip').innerHTML=data.map(d=>`
+    <div class="strip-card">
+      <div class="strip-city" style="color:${lvlColors[d.level]||'var(--amber)'}">${d.city?.toUpperCase()||'—'} · ${d.level?.toUpperCase()||'—'}</div>
+      <div class="strip-txt">${d.alert||'No alert'}</div>
+      <div class="strip-time">${timeAgo(d.created_at)}</div>
+    </div>
+  `).join('');
+}
+
+function timeAgo(iso) {
+  const diff=Math.round((Date.now()-new Date(iso))/1000);
+  if(diff<60) return diff+'s ago';
+  if(diff<3600) return Math.round(diff/60)+'min ago';
+  return Math.round(diff/3600)+'hr ago';
+}
+
+// ════════════ PAGE ROUTING ════════════
+let currentPage='home';
+function goPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('page-'+id)?.classList.add('on');
+  document.getElementById('tab-'+id)?.classList.add('on');
+  currentPage=id;
+  window.scrollTo(0,0);
+  if(id==='traffic') initTrafficPage();
+  if(id==='chat'&&!chatReady) initChat();
+  if(id==='report') renderReport();
+  if(id==='fares') renderLB();
+  if(id==='community') renderFeed();
+  if(id==='profile') renderProfile();
+}
+
+// ════════════ TRAFFIC PAGE ════════════
+function initTrafficPage(){renderTAlerts();updateCheckBtn()}
+function selTCity(c,btn){tCity=c;document.querySelectorAll('#tcityRow .cpill').forEach(p=>p.classList.remove('on'));btn.classList.add('on');document.getElementById('tFrom').value='';document.getElementById('tTo').value='';document.getElementById('tResult').innerHTML='';document.getElementById('tTabs').style.display='none';tResult=null;renderTAlerts();updateCheckBtn()}
+function renderTAlerts(){const al=CITIES[tCity]?.alerts||[];document.getElementById('tAlerts').innerHTML=al.map(a=>`<div class="alert-strip">⚡ <span>${a}</span></div>`).join('')}
+function updateCheckBtn(){const f=document.getElementById('tFrom').value.trim(),t=document.getElementById('tTo').value.trim();document.getElementById('checkBtn').disabled=!f||!t}
+function handleAC(inp,box,city){updateCheckBtn();const val=document.getElementById(inp).value;const areas=CITIES[city]?.areas||[];const b=document.getElementById(box);const m=val.length>=2?areas.filter(a=>a.toLowerCase().includes(val.toLowerCase())).slice(0,5):[];if(m.length){b.style.display='block';b.innerHTML=m.map(s=>`<div class="sugg-i" onclick="pickAC('${inp}','${box}','${s}')">${inp.includes('From')?'📍':'🎯'} ${s}</div>`).join('')}else b.style.display='none'}
+function pickAC(inp,box,val){document.getElementById(inp).value=val;document.getElementById(box).style.display='none';updateCheckBtn()}
+function swapRoute(a,b){const ea=document.getElementById(a),eb=document.getElementById(b);[ea.value,eb.value]=[eb.value,ea.value];updateCheckBtn()}
+function getTLevel(){const h=new Date().getHours(),d=new Date().getDay(),wk=d===0||d===6;if(wk)return h>=10&&h<=14?'medium':'low';if(h>=7&&h<=9||h>=16&&h<=19)return 'severe';if(h>=10&&h<=15)return 'medium';if(h>=20||h<6)return 'low';return 'medium'}
+async function checkTraffic(){
+  const from=document.getElementById('tFrom').value.trim(),to=document.getElementById('tTo').value.trim();
+  if(!from||!to)return;
+  document.getElementById('checkBtn').textContent='⏳ Consulting Oracle...';
+  document.getElementById('checkBtn').disabled=true;
+  // Fetch from DB if available, else compute locally
+  let level='medium',dist=Math.floor(Math.random()*22)+4;
+  if(sb){
+    const {data}=await sb.from('traffic_updates').select('level').eq('city',tCity).order('created_at',{ascending:false}).limit(1);
+    if(data&&data[0])level=data[0].level;
+    else level=getTLevel();
+  } else level=getTLevel();
+  const speeds={low:42,medium:22,high:13,severe:6};
+  const dur=Math.round((dist/speeds[level])*60);
+  const rates=CITIES[tCity].fares;
+  const fares={keke:Math.round(rates.keke*(dist/5)),danfo:Math.round(rates.danfo*(dist/8)),okada:Math.round(rates.okada*(dist/5)),taxi:Math.round(rates.taxi*(dist/10)),uber:Math.round(rates.uber*(dist/10))};
+  const msgs=PIDGINS[level];
+  tResult={level,dist,dur,fares,pidgin:msgs[Math.floor(Math.random()*msgs.length)],from,to,style:LSTYLES[level]};
+  document.getElementById('checkBtn').textContent='🔮 Check Road';
+  document.getElementById('checkBtn').disabled=false;
+  renderTResult();
+  document.getElementById('tTabs').style.display='block';
+  swTTab('fares');
+}
+function renderTResult(){const r=tResult;if(!r)return;document.getElementById('tResult').innerHTML=`<div class="res-card" style="border-color:${r.style.color};background:${r.style.bg}"><div class="res-top"><div><span class="res-badge" style="background:${r.style.color};color:#07090D">${r.style.label}</span><div style="font-size:11px;color:var(--ink3);margin-top:5px">${r.from} → ${r.to}</div></div><div style="text-align:right"><div class="res-eta" style="color:${r.style.color}">${r.dur}<span style="font-size:14px"> min</span></div><div class="res-dist">${r.dist} km</div></div></div><div class="pidgin" style="border-color:${r.style.color}">💬 ${r.pidgin}</div></div>`}
+function swTTab(tab){tActiveTab=tab;['fares','tips','alt'].forEach(t=>document.getElementById('it'+t.charAt(0).toUpperCase()+t.slice(1))?.classList.toggle('on',t===tab));const r=tResult;if(!r)return;if(tab==='fares'){document.getElementById('tTabBody').innerHTML=`<div class="fare-g">${TMODES.map(m=>`<div class="fare-item"><div class="fare-ico">${m.icon}</div><div><div class="fare-nm">${m.name}</div><div class="fare-pr">₦${(r.fares[m.id]||0).toLocaleString()}</div></div></div>`).join('')}</div><div style="font-size:11px;color:var(--ink3);margin-top:8px;text-align:center">* Estimates vary by negotiation & surge</div>`}else if(tab==='tips'){const tips=[r.level==='severe'&&'🚨 Avoid this route now — gridlock detected.',r.level==='high'&&'⚠️ Leave early or wait 1–2 hrs for traffic to ease.',r.dur>45&&'🎵 Download a playlist before entering this road.',r.dist>15&&'💧 Carry water — this go take time.','📱 Share your live location with family.','🚌 BRT is usually fastest during heavy go-slow.',tCity==='Lagos'&&'🌧️ If rain fall, multiply travel time by 3x.',tCity==='Kano'&&'🕌 Expect traffic after Friday Jumat prayers.'].filter(Boolean);document.getElementById('tTabBody').innerHTML=tips.map(t=>`<div class="tip-i">${t}</div>`).join('')}else{document.getElementById('tTabBody').innerHTML=[{route:'Express Way',time:Math.round(r.dur*.75)+'min',note:'Faster — toll applies'},{route:'Back roads',time:Math.round(r.dur*1.1)+'min',note:'Longer but less traffic'},{route:'Public transport combo',time:Math.round(r.dur*.9)+'min',note:'BRT + Keke mix'}].map(a=>`<div class="tip-i" style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:600;color:var(--ink);margin-bottom:2px">${a.route}</div><div style="font-size:11px;color:var(--ink3)">${a.note}</div></div><div style="font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:var(--amber)">${a.time}</div></div>`).join('')}}
+
+// ════════════ CHAT PAGE ════════════
+const SYS=`You are "Conductor AI" — a witty Nigerian transport fare assistant. Speak Pidgin/English mix. THREE modes:
+FARE ASSISTANT: Give ₦ estimates for Keke,Danfo,Okada,Taxi,Uber for Nigerian routes. Use **bold** for key info. Add Pidgin commentary.
+QUIZ MODE: Quiz users on Nigerian fares, track score, give Pidgin feedback.
+PRICE REPORTER: Collect fare reports from users warmly.
+Always be helpful, funny, use Nigerian expressions and emojis 🚌🛺💰🇳🇬. Keep responses concise.`;
+
+function initChat(){chatReady=true;addAiMsg("Ẹ káàbọ̀! 🇳🇬 Na me be **Conductor AI**!\n\nI fit help you:\n🚌 **Check fares** for any Nigerian route\n🎯 **Quiz you** on transport costs\n📍 **Collect fare** updates from your experience\n\nSo wetin you wan know? 🤔")}
+function setMode(m){chatMode=m;['a','q','r'].forEach(x=>{const p=document.getElementById('pm'+x.toUpperCase());if(p)p.className='mpill'+(x===m?' m'+{'a':'a','q':'q','r':'r'}[x]:'')});document.getElementById('qScore').style.display=m==='q'?'flex':'none';if(m==='q')sendMsg('Quiz me on Nigerian transport fares!');if(m==='r')sendMsg('I want to report a transport fare I just paid.')}
+function addAiMsg(t){const now=new Date().toLocaleTimeString('en-NG',{hour:'2-digit',minute:'2-digit'});const el=document.createElement('div');el.className='msg-row';el.innerHTML=`<div class="mav">🚌</div><div><div class="mbub ai">${fmtMsg(t)}</div><div class="mtime">${now}</div></div>`;document.getElementById('msgs').appendChild(el);scrollChat()}
+function addUserMsg(t){const now=new Date().toLocaleTimeString('en-NG',{hour:'2-digit',minute:'2-digit'});const el=document.createElement('div');el.className='msg-row u';el.innerHTML=`<div class="mav">🧑</div><div><div class="mbub usr">${t}</div><div class="mtime" style="text-align:right">${now}</div></div>`;document.getElementById('msgs').appendChild(el);scrollChat()}
+function showTyping(){const el=document.createElement('div');el.className='msg-row';el.id='typing';el.innerHTML=`<div class="mav">🚌</div><div class="mbub ai"><div class="typing"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div><div style="font-size:10px;color:var(--ink3);margin-top:3px">searching live data...</div></div>`;document.getElementById('msgs').appendChild(el);scrollChat()}
+function hideTyping(){document.getElementById('typing')?.remove()}
+function scrollChat(){const m=document.getElementById('msgs');m.scrollTop=m.scrollHeight}
+function fmtMsg(t){return t.replace(/\*\*(.+?)\*\*/g,'<strong style="color:var(--amber)">$1</strong>').replace(/\n/g,'<br/>')}
+async function sendMsg(text){
+  const inp=document.getElementById('chatIn');
+  const msg=text||inp.value.trim();
+  if(!msg||document.getElementById('sendBtn').disabled)return;
+  if(!text){inp.value='';inp.style.height='auto'}
+  document.getElementById('sendBtn').disabled=true;
+  document.getElementById('agSt').textContent='🟡 Thinking...';
+  document.getElementById('qchips').style.display='none';
+  addUserMsg(msg);
+  chatHistory.push({role:'user',content:msg});
+  const lower=msg.toLowerCase();
+  if(lower.includes('quiz')||lower.includes('test me'))chatMode='q';
+  showTyping();
+  try{
+    if(isDemo){throw new Error('DEMO')}
+    if(!sb){throw new Error('No Supabase')}
+    if(!user){toast('Sign in to use AI chat','warn');throw new Error('AUTH')}
+
+    const {data, error} = await sb.functions.invoke('chat',{
+      body:{messages:chatHistory,session_id:chatSessionId,city:userProfile.city,max_tokens:650}
+    });
+    if(error) throw error;
+    const reply = (data && data.reply) ? String(data.reply) : 'Omo! Network wahala catch me. Try again abeg 😅';
+    if(data && data.session_id){chatSessionId=String(data.session_id);localStorage.setItem('chat_sid',chatSessionId)}
+    if(chatMode==='q'){const l=reply.toLowerCase();if(l.includes('correct')||l.includes('right')){qScore.c++;qScore.t++}else if(l.includes('wrong')||l.includes('incorrect')){qScore.t++}document.getElementById('qScore').textContent=`✅ ${qScore.c}/${qScore.t}`}
+    hideTyping();chatHistory.push({role:'assistant',content:reply});addAiMsg(reply);
+  }catch(e){
+    hideTyping();
+    if(String(e.message||e).includes('DEMO')) addAiMsg('Demo mode dey — connect Supabase + sign in to use live AI chat.')
+    else if(String(e.message||e).includes('AUTH')) addAiMsg('Abeg sign in first make I fit talk well. 🔐')
+    else addAiMsg('E be like network wahala 😅 Check your connection!')
+  }
+  document.getElementById('agSt').textContent='🟢 Online · live data connected';
+  document.getElementById('sendBtn').disabled=false;
+}
+
+// ════════════ REPORT PAGE ════════════
+function renderReport(){updateRProg();const el=document.getElementById('rBody');const pw=document.getElementById('rProgWrap');if(rStep>=R_TOTAL){pw.style.display='none';renderRSuc(el);return}pw.style.display='block';const fns=[renderRC,renderRF,renderRT,renderRTr,renderRFa,renderRTi,renderRD,renderRDa,renderRSum];fns[rStep]&&fns[rStep](el)}
+function updateRProg(){const pct=Math.round((rStep/R_TOTAL)*100);document.getElementById('rFill').style.width=pct+'%';document.getElementById('rStepLbl').textContent=rStep<R_TOTAL?`Step ${rStep+1} of ${R_TOTAL}`:'Complete!';document.getElementById('rPctLbl').textContent=pct+'%';const de=document.getElementById('rDots');de.innerHTML='';for(let i=0;i<R_TOTAL;i++){const d=document.createElement('div');d.className='dot'+(i===rStep?' on':i<rStep?' dn':'');de.appendChild(d)}}
+function rNext(){rStep++;renderReport();window.scrollTo(0,0)}
+function rBack(){rStep--;renderReport();window.scrollTo(0,0)}
+function renderRC(el){el.innerHTML=`<div class="rc"><div class="rsl">Step 1 of 9 — City</div><div class="rq">Which city did you travel in?</div><div class="rsub">Select where this journey happened</div><div class="og">${Object.entries(CITIES).map(([c,d])=>`<button class="ob ${rData.city===c?'sel':''}" onclick="rSC('${c}')" ><span class="oi">${d.emoji}</span><span>${c}</span></button>`).join('')}</div><div class="rnav"><button class="rnxt" onclick="if(rData.city)rNext()" ${!rData.city?'disabled':''}>Continue →</button></div></div>`}
+function rSC(c){rData.city=c;rData.from='';rData.to='';renderReport()}
+function renderRF(el){const ar=CITIES[rData.city]?.areas||[];el.innerHTML=`<div class="rc"><div class="rsl">Step 2 of 9 — Departure</div><div class="rq">Where did your journey start?</div><div class="rsub">Type the area or landmark in ${rData.city}</div><div class="ac-wrap"><input class="ri2" id="rfInp" placeholder="e.g. ${ar[0]||'Ikeja'}" value="${rData.from||''}" oninput="rHF(this.value)" autocomplete="off"/><div class="sugg" id="rfS"></div></div><div class="rnav"><button class="rbk" onclick="rBack()">← Back</button><button class="rnxt" id="rfN" onclick="if(rData.from)rNext()" ${!rData.from?'disabled':''}>Continue →</button></div></div>`;setTimeout(()=>document.getElementById('rfInp')?.focus(),80)}
+function rHF(v){rData.from=v;document.getElementById('rfN').disabled=!v;const m=(CITIES[rData.city]?.areas||[]).filter(a=>a.toLowerCase().includes(v.toLowerCase())).slice(0,5);const b=document.getElementById('rfS');if(m.length&&v.length>=2){b.style.display='block';b.innerHTML=m.map(s=>`<div class="sugg-i" onclick="rPF('${s}')">📍 ${s}</div>`).join('')}else b.style.display='none'}
+function rPF(s){rData.from=s;document.getElementById('rfInp').value=s;document.getElementById('rfS').style.display='none';document.getElementById('rfN').disabled=false}
+function renderRT(el){const ar=CITIES[rData.city]?.areas||[];el.innerHTML=`<div class="rc"><div class="rsl">Step 3 of 9 — Destination</div><div class="rq">Where did your journey end?</div><div class="rsub">From <strong style="color:var(--amber)">${rData.from}</strong> to...</div><div class="ac-wrap"><input class="ri2" id="rtInp" placeholder="e.g. ${ar[4]||'Victoria Island'}" value="${rData.to||''}" oninput="rHT(this.value)" autocomplete="off"/><div class="sugg" id="rtS"></div></div><div class="rnav"><button class="rbk" onclick="rBack()">← Back</button><button class="rnxt" id="rtN" onclick="if(rData.to)rNext()" ${!rData.to?'disabled':''}>Continue →</button></div></div>`;setTimeout(()=>document.getElementById('rtInp')?.focus(),80)}
+function rHT(v){rData.to=v;document.getElementById('rtN').disabled=!v;const m=(CITIES[rData.city]?.areas||[]).filter(a=>a.toLowerCase().includes(v.toLowerCase())).slice(0,5);const b=document.getElementById('rtS');if(m.length&&v.length>=2){b.style.display='block';b.innerHTML=m.map(s=>`<div class="sugg-i" onclick="rPT('${s}')">🎯 ${s}</div>`).join('')}else b.style.display='none'}
+function rPT(s){rData.to=s;document.getElementById('rtInp').value=s;document.getElementById('rtS').style.display='none';document.getElementById('rtN').disabled=false}
+function renderRTr(el){el.innerHTML=`<div class="rc"><div class="rsl">Step 4 of 9 — Transport</div><div class="rq">Which transport did you use?</div><div class="rsub">Select the vehicle type you boarded</div><div class="og og3">${TMODES.map(m=>`<button class="ob ${rData.transport===m.id?'sel':''}" onclick="rSTr('${m.id}')"><span class="oi">${m.icon}</span><span>${m.name}</span></button>`).join('')}</div><div class="rnav"><button class="rbk" onclick="rBack()">← Back</button><button class="rnxt" onclick="if(rData.transport)rNext()" ${!rData.transport?'disabled':''}>Continue →</button></div></div>`}
+function rSTr(t){rData.transport=t;renderReport()}
+function renderRFa(el){const tm=TMODES.find(m=>m.id===rData.transport);el.innerHTML=`<div class="rc"><div class="rsl">Step 5 of 9 — Fare</div><div class="rq">How much did you pay?</div><div class="rsub">${tm?.icon} ${tm?.name} · ${rData.from} → ${rData.to}</div><div class="fw"><span class="fsym">₦</span><input class="ri2 fb" id="rFaInp" type="number" placeholder="0" value="${rData.fare||''}" oninput="rData.fare=this.value;document.getElementById('rFaN').disabled=!this.value" min="0"/></div><div class="rchips">${['150','200','300','500','800','1000','1500','2000','3000','5000'].map(v=>`<button class="rch ${rData.fare==v?'sel':''}" onclick="rSFa('${v}')">₦${parseInt(v).toLocaleString()}</button>`).join('')}</div><div class="rnav"><button class="rbk" onclick="rBack()">← Back</button><button class="rnxt" id="rFaN" onclick="if(rData.fare)rNext()" ${!rData.fare?'disabled':''}>Continue →</button></div></div>`;setTimeout(()=>document.getElementById('rFaInp')?.focus(),80)}
+function rSFa(v){rData.fare=v;document.getElementById('rFaInp').value=v;document.getElementById('rFaN').disabled=false;document.querySelectorAll('#rBody .rch').forEach(c=>c.classList.toggle('sel',c.textContent.replace(/[₦,]/g,'').trim()===parseInt(v).toLocaleString()))}
+function renderRTi(el){el.innerHTML=`<div class="rc"><div class="rsl">Step 6 of 9 — Time of Day</div><div class="rq">When did you travel?</div><div class="rsub">Time affects fares — rush hours cost more!</div><div class="og og1">${TSLOTS.map(t=>`<button class="ob" style="flex-direction:row;justify-content:flex-start;gap:10px;padding:11px 13px;${rData.time===t?'border-color:var(--amber);background:var(--ag);color:var(--amber)':''}" onclick="rSTi('${t}')"><span>${t}</span></button>`).join('')}</div><div style="margin-top:13px"><div style="font-size:10px;color:var(--ink3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:7px">Note (optional)</div><textarea class="ri2" rows="2" placeholder="e.g. Driver added ₦50 for luggage" oninput="rData.note=this.value" style="resize:none">${rData.note||''}</textarea></div><div class="rnav"><button class="rbk" onclick="rBack()">← Back</button><button class="rnxt" onclick="if(rData.time)rNext()" ${!rData.time?'disabled':''}>Continue →</button></div></div>`}
+function rSTi(t){rData.time=t;renderReport()}
+function renderRD(el){el.innerHTML=`<div class="rc"><div class="rsl">Step 7 of 9 — Duration</div><div class="rq">How long did the trip take?</div><div class="rsub">From <strong style="color:var(--amber)">${rData.from}</strong> to <strong style="color:var(--amber)">${rData.to}</strong> — including waiting</div><div class="og">${DUROPTS.map(d=>`<button class="ob ${rData.duration===d.id?'sel':''}" onclick="rSD('${d.id}','${d.label}',${d.mins})"><span class="oi">${d.icon}</span><span>${d.label}</span></button>`).join('')}</div><div class="ibox" style="margin-top:12px">🚦 Journey duration helps us build traffic congestion data!</div><div class="rnav"><button class="rbk" onclick="rBack()">← Back</button><button class="rnxt" onclick="if(rData.duration)rNext()" ${!rData.duration?'disabled':''}>Continue →</button></div></div>`}
+function rSD(id,label,mins){rData.duration=id;rData.durationLabel=label;rData.durationMins=mins;renderReport()}
+function renderRDa(el){const today=new Date(),ts=today.toISOString().split('T')[0],qd=[];for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);const v=d.toISOString().split('T')[0],l=i===0?'Today':i===1?'Yesterday':d.toLocaleDateString('en-NG',{weekday:'short',day:'numeric',month:'short'});qd.push({v,l})}if(!rData.travelDate){rData.travelDate=ts;rData.travelDateLabel='Today'}el.innerHTML=`<div class="rc"><div class="rsl">Step 8 of 9 — Date</div><div class="rq">When did this journey happen?</div><div class="rsub">Helps track how fares change over time</div><div style="margin-bottom:14px"><div style="font-size:10px;color:var(--ink3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:9px">Quick Select</div><div class="rchips">${qd.map(d=>`<button class="rch ${rData.travelDate===d.v?'sel':''}" onclick="rSDa('${d.v}','${d.l}')">${d.l}</button>`).join('')}</div></div><input type="date" class="ri2" id="rDaInp" value="${rData.travelDate||ts}" max="${ts}" oninput="rSDa(this.value,'')" style="font-size:14px"/><div class="ibox" style="margin-top:12px">📊 Date helps detect festive spikes and fuel scarcity surges!</div><div class="rnav"><button class="rbk" onclick="rBack()">← Back</button><button class="rnxt" onclick="if(rData.travelDate)rNext()" ${!rData.travelDate?'disabled':''}>Review →</button></div></div>`}
+function rSDa(v,l){rData.travelDate=v;rData.travelDateLabel=l||new Date(v+'T12:00:00').toLocaleDateString('en-NG',{weekday:'long',day:'numeric',month:'long',year:'numeric'});document.querySelectorAll('#rBody .rch').forEach(c=>c.classList.toggle('sel',c.textContent===l||(l===''&&v===new Date().toISOString().split('T')[0]&&c.textContent==='Today')));const di=document.getElementById('rDaInp');if(di&&di.value!==v)di.value=v}
+function renderRSum(el){const tm=TMODES.find(m=>m.id===rData.transport);const fd=rData.travelDate?new Date(rData.travelDate+'T12:00:00').toLocaleDateString('en-NG',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'—';el.innerHTML=`<div class="ibox">✅ Review and confirm before submitting!</div><div class="rc"><div class="rsl">Step 9 of 9 — Confirm</div><div class="rq">Your Fare Report</div><div style="margin-top:14px">${[['City',`🏙️ ${rData.city}`],['Route',`${rData.from} → ${rData.to}`],['Transport',`${tm?.icon} ${tm?.name}`],['Fare Paid',null],['Time of Day',`🕐 ${rData.time}`],['Duration',`⏱️ ${rData.durationLabel||'—'}`],['Date',`📅 ${fd}`],...(rData.note?[['Note',rData.note]]:[])].map(([l,v])=>l==='Fare Paid'?`<div class="sumr"><span class="suml">${l}</span><span class="sumf">₦${parseInt(rData.fare).toLocaleString()}</span></div>`:`<div class="sumr"><span class="suml">${l}</span><span class="sumv">${v}</span></div>`).join('')}</div><div class="rnav"><button class="rbk" onclick="rBack()">← Edit</button><button class="rnxt" onclick="rSubmit()">🚀 Submit Report</button></div></div>`}
+async function rSubmit(){
+  // Save to Supabase
+  if(sb && !user && !isDemo){toast('Sign in to submit fare reports','warn');return}
+  const parts=[rData.time?`Time: ${rData.time}`:null,rData.durationLabel?`Duration: ${rData.durationLabel}`:null,rData.travelDate?`Date: ${rData.travelDate}`:null,rData.note?`Note: ${rData.note}`:null].filter(Boolean);
+  const notes=(parts.join(' · ')||null);
+  const payload={
+    city:rData.city,
+    transport_type:rData.transport,
+    route_from:rData.from,
+    route_to:rData.to,
+    fare_amount:parseInt(rData.fare),
+    notes:notes?String(notes).slice(0,280):null,
+    submitted_by:user?String(userProfile.name||'user'): 'anonymous',
+    user_id:user?.id||null
+  };
+  if(sb){
+    const{error}=await sb.from('fare_reports').insert(payload);
+    if(error){toast('Save failed: '+error.message,'error');return}
+  }
+  userProfile.reports=(userProfile.reports||0)+1;userProfile.points=(userProfile.points||0)+50;localStorage.setItem('uprof',JSON.stringify(userProfile));
+  if(sb&&user){
+    await sb.from('user_profiles').update({reports_count:userProfile.reports,points:userProfile.points,city:userProfile.city,updated_at:new Date().toISOString()}).eq('id',user.id);
+  }
+  toast('+50 Conductor Points earned! 🏆','success',3500);
+  rStep=R_TOTAL;renderReport();
+}
+function renderRSuc(el){const pidgin=PTHANKS[Math.floor(Math.random()*PTHANKS.length)];const tm=TMODES.find(m=>m.id===rData.transport);const shareText=`I just reported a fare on Conductor AI! ${tm?.icon} ${tm?.name} from ${rData.from} to ${rData.to} in ${rData.city} costs ₦${parseInt(rData.fare).toLocaleString()} and took ${rData.durationLabel}. Help your people — report yours too!`;el.innerHTML=`<div class="rc suc-w"><div class="suc-i">🎉</div><div class="suc-t">Report Received!</div><p class="suc-m">Your data helps Nigerians across ${rData.city} get accurate transport costs.</p><div class="pb">${pidgin}</div><div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:18px;text-align:left"><div style="font-size:10px;color:var(--ink3);font-weight:700;letter-spacing:1px;margin-bottom:9px;text-transform:uppercase">Your Contribution</div><div style="font-size:14px;font-weight:600;color:var(--ink)">${tm?.icon} ${tm?.name}</div><div style="font-size:12px;color:var(--ink3);margin:2px 0">${rData.from} → ${rData.to}, ${rData.city}</div><div style="font-family:'Unbounded',sans-serif;font-size:24px;font-weight:900;color:var(--amber);margin-top:5px">₦${parseInt(rData.fare).toLocaleString()}</div><div style="font-size:11px;color:var(--ink3);margin-top:3px">⏱️ ${rData.durationLabel} · 📅 ${rData.travelDateLabel||rData.travelDate}</div></div><button class="wbtn" onclick="window.open('https://wa.me/?text=${encodeURIComponent(shareText)}','_blank')">📲 Share on WhatsApp</button><button class="restbtn" onclick="rData={};rStep=0;renderReport()">＋ Report Another Fare</button></div>`}
+
+// ════════════ LEADERBOARD ════════════
+function renderLB(){const data=lbFilter==='all'?LBDATA:LBDATA.filter(r=>r.city===lbFilter);document.getElementById('surgeAlert').textContent='Surge alert: Lagos Uber prices up 40% — fuel scarcity in Lekki corridor';document.getElementById('lbBody').innerHTML=`<div style="font-size:10px;color:var(--ink3);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">MOST EXPENSIVE ROUTES</div>${data.map((r,i)=>`<div class="lbrc"><div class="lbrk ${i===0?'g':i===1?'s':i===2?'b':''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+r.rank}</div><span style="font-size:20px;flex-shrink:0">${r.icon}</span><div class="lbri"><div class="lbrn">${r.from} → ${r.to}</div><div class="lbrm">${r.city} · ${TMODES.find(m=>m.id===r.mode)?.name}</div></div><div class="lbrf"><div class="lbra">₦${r.fare.toLocaleString()}</div><div class="lbrt ${r.trend==='up'?'tup':r.trend==='dn'?'tdn':'tsm'}">${r.trend==='up'?'↑':r.trend==='dn'?'↓':'→'} ${r.chg}</div></div></div>`).join('')}<div style="margin-top:22px;font-size:10px;color:var(--ink3);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">BEST VALUE ROUTES 💚</div>${[{from:'Surulere',to:'Yaba',city:'Lagos',fare:250,mode:'keke',icon:'🛺'},{from:'Wuse',to:'Area 1',city:'Abuja',fare:300,mode:'keke',icon:'🛺'},{from:'Mile 1',to:'Rumuola',city:'Port Harcourt',fare:200,mode:'danfo',icon:'🚌'},{from:'Bodija',to:'Ring Road',city:'Ibadan',fare:150,mode:'keke',icon:'🛺'}].map(r=>`<div class="lbrc"><span style="font-size:20px;flex-shrink:0">${r.icon}</span><div class="lbri"><div class="lbrn">${r.from} → ${r.to}</div><div class="lbrm">${r.city} · ${TMODES.find(m=>m.id===r.mode)?.name}</div></div><div class="lbrf"><div class="lbra" style="color:var(--green)">₦${r.fare.toLocaleString()}</div><div class="lbrt tdn">↓ Best value</div></div></div>`).join('')}`}
+function filterLB(f,btn){lbFilter=f;document.querySelectorAll('#lbFilters .lbfb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderLB()}
+
+// ════════════ COMMUNITY FEED ════════════
+const FTYPE={traffic:{color:'rgba(245,158,11,.12)',border:'rgba(245,158,11,.3)',icon:'🚦'},fare:{color:'rgba(34,197,94,.1)',border:'rgba(34,197,94,.25)',icon:'💰'},fuel:{color:'rgba(239,68,68,.1)',border:'rgba(239,68,68,.25)',icon:'⛽'},accident:{color:'rgba(239,68,68,.15)',border:'rgba(239,68,68,.35)',icon:'🚨'},general:{color:'rgba(59,130,246,.08)',border:'rgba(59,130,246,.2)',icon:'💬'}};
+function renderFeed(){const posts=feedFilter==='all'?feedPosts:feedPosts.filter(p=>p.type===feedFilter);document.getElementById('feedBody').innerHTML=posts.map(p=>{const ft=FTYPE[p.type]||FTYPE.general;return`<div class="feed-post" style="background:${ft.color};border-color:${ft.border}"><div class="fp-hdr"><div style="display:flex;align-items:center;gap:8px"><div class="fp-av">${p.user.charAt(0)}</div><div><div class="fp-nm" style="display:flex;align-items:center;gap:4px">${p.user} ${p.verified?'<span title="Verified">✅</span>':''}</div><div class="fp-meta">${p.city} · ${p.time}</div></div></div><span style="font-size:17px">${ft.icon}</span></div><div class="fp-txt">${p.text}</div><div class="fp-acts"><button class="fp-like ${userLikes.has(p.id)?'liked':''}" onclick="toggleLike(${p.id},this)">${userLikes.has(p.id)?'❤️':'🤍'} <span id="lk-${p.id}">${p.likes}</span></button><span style="font-size:12px;color:var(--ink3)">💬 ${p.comments||0}</span><button class="fp-share" onclick="sharePost(${p.id})">📤 Share</button></div></div>`}).join('')||`<div style="text-align:center;padding:36px;color:var(--ink3)">No posts in this category yet. Be first! 🚀</div>`}
+function filterFeed(f,btn){feedFilter=f;document.querySelectorAll('#feedFilters .lbfb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderFeed()}
+async function toggleLike(id,btn){
+  const p=feedPosts.find(x=>x.id===id);if(!p)return;
+  if(sb && !user && !isDemo){toast('Sign in to like posts','warn');return}
+  const liked=userLikes.has(id);
+  if(sb && user){
+    if(liked){
+      const {error}=await sb.from('post_likes').delete().eq('post_id',id).eq('user_id',user.id);
+      if(error){toast('Unlike failed: '+error.message,'error');return}
+      userLikes.delete(id);
+      p.likes=Math.max(0,(p.likes||0)-1);
+    }else{
+      const {error}=await sb.from('post_likes').insert({post_id:id,user_id:user.id});
+      if(error){toast('Like failed: '+error.message,'error');return}
+      userLikes.add(id);
+      p.likes=(p.likes||0)+1;
+      toast('Liked! ❤️','success',1400);
+    }
+  }else{
+    if(liked){userLikes.delete(id);p.likes--}else{userLikes.add(id);p.likes++;toast('Liked! ❤️','success',1400)}
+  }
+  btn.className='fp-like'+(userLikes.has(id)?' liked':'');
+  document.getElementById('lk-'+id).textContent=p.likes;
+  btn.innerHTML=(userLikes.has(id)?'❤️':'🤍')+` <span id="lk-${id}">${p.likes}</span>`;
+  localStorage.setItem('ulikes',JSON.stringify([...userLikes]));
+}
+function sharePost(id){const p=feedPosts.find(x=>x.id===id);if(!p)return;window.open(`https://wa.me/?text=${encodeURIComponent(`🇳🇬 Conductor AI Update from ${p.city}:\n\n"${p.text}"\n\nStay informed — conductor-ai.ng`)},'_blank')}
+async function submitPost(){
+  const txt=document.getElementById('postTxt').value.trim(),city=document.getElementById('postCity').value,type=document.getElementById('postType').value;
+  if(!txt)return;
+  if(sb && !user && !isDemo){toast('Sign in to post to the community feed','warn');return}
+  const np={id:Date.now(),user:userProfile.name||'You',city,type,time:'Just now',text:txt,likes:0,comments:0,verified:false};
+  // Save to Supabase
+  if(sb){
+    const{error}=await sb.from('feed_posts').insert({content:txt,city,type,username:userProfile.name,user_id:user?.id||null});
+    if(error){toast('Post failed: '+error.message,'error');return}
+    toast('Posted! Pending moderation.','success');
+    document.getElementById('postTxt').value='';
+    document.getElementById('postSubmit').disabled=true;
+    userProfile.points=(userProfile.points||0)+10;
+    localStorage.setItem('uprof',JSON.stringify(userProfile));
+    if(user) await sb.from('user_profiles').update({points:userProfile.points,updated_at:new Date().toISOString()}).eq('id',user.id);
+    return;
+  }
+  feedPosts.unshift(np);document.getElementById('postTxt').value='';document.getElementById('postSubmit').disabled=true;renderFeed();toast('Update posted! 🎉','success');userProfile.points=(userProfile.points||0)+10;localStorage.setItem('uprof',JSON.stringify(userProfile))
+}
+// Enable post button
+document.getElementById('postSubmit').addEventListener('mouseover',()=>{document.getElementById('postSubmit').style.opacity=document.getElementById('postTxt').value.trim()?'1':'0.5'});
+
+// ════════════ PROFILE PAGE ════════════
+function renderProfile(){
+  const lv=userProfile.points<100?{name:'Road Learner',icon:'🌱',next:100}:userProfile.points<500?{name:'Area Boy',icon:'🧢',next:500}:userProfile.points<1000?{name:'Conductor',icon:'🚌',next:1000}:{name:'Road Oracle',icon:'🔮',next:Infinity};
+  const pp=lv.next===Infinity?100:Math.round((userProfile.points/lv.next)*100);
+  const authSection=user?`<div style="background:var(--gg);border:1px solid rgba(34,197,94,.25);border-radius:9px;padding:12px 14px;font-size:13px;color:var(--green);display:flex;align-items:center;gap:8px;margin-bottom:12px">✅ Signed in as <strong>${user.email}</strong></div>`:
+    `<button class="btn-p" onclick="handleAuth()" style="width:100%;margin-bottom:12px;padding:12px">🔐 Sign In to Sync Data</button>`;
+  document.getElementById('profBody').innerHTML=`
+    <div class="prof-hdr"><div class="prof-av">${lv.icon}</div><div class="prof-nm" id="pName">${userProfile.name}</div><div class="prof-role">${lv.name} · ${userProfile.city}</div><div style="margin-top:9px"><button onclick="editName()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 13px;color:var(--ink2);font-size:12px;cursor:pointer;font-family:inherit">✏️ Edit Name</button></div></div>
+    ${authSection}
+    <div class="pcard"><div class="pcard-lbl">Conductor Points</div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:13px;color:var(--ink2)">Level: <strong style="color:var(--amber)">${lv.name}</strong></div><div style="font-family:'Unbounded',sans-serif;font-size:19px;font-weight:900;color:var(--amber)">${userProfile.points} pts</div></div><div style="background:var(--surface2);border-radius:99px;height:5px;overflow:hidden;margin-bottom:6px"><div style="width:${pp}%;height:100%;background:linear-gradient(90deg,var(--amber),var(--amber2));border-radius:99px;transition:width 1s ease"></div></div><div style="font-size:11px;color:var(--ink3)">${lv.next===Infinity?'Max level! 🏆':`${userProfile.points}/${lv.next} to next level`}</div></div>
+    <div class="pcard"><div class="pcard-lbl">Your Stats</div><div class="pstat-g">${[{icon:'📍',val:userProfile.reports||0,label:'Fares Reported'},{icon:'🔥',val:userProfile.streak||0,label:'Day Streak'},{icon:'⭐',val:savedRoutes.length,label:'Saved Routes'},{icon:'❤️',val:[...userLikes].length,label:'Posts Liked'}].map(s=>`<div class="pstat"><div style="font-size:22px;margin-bottom:5px">${s.icon}</div><div class="pstat-n">${s.val}</div><div class="pstat-l">${s.label}</div></div>`).join('')}</div></div>
+    <div class="pcard"><div class="pcard-lbl">Badges</div><div class="badges">${[{icon:'🚌',name:'First Report',earned:userProfile.reports>0},{icon:'🔥',name:'3-Day Streak',earned:userProfile.streak>=3},{icon:'💰',name:'Fare Expert',earned:userProfile.reports>=5},{icon:'🌍',name:'Multi-City',earned:savedRoutes.length>0},{icon:'👑',name:'Top Contributor',earned:userProfile.reports>=20},{icon:'🔮',name:'Oracle',earned:userProfile.points>=1000}].map(b=>`<div class="badge-item" style="opacity:${b.earned?1:.25}"><div class="badge-ico" style="background:${b.earned?'var(--ag)':'var(--surface2)'};border:1px solid ${b.earned?'rgba(245,166,35,.3)':'var(--border)'}">${b.icon}</div><div class="badge-nm">${b.name}</div></div>`).join('')}</div></div>
+    <div class="pcard"><div class="pcard-lbl">Home City</div><div style="display:flex;flex-wrap:wrap;gap:6px">${Object.entries(CITIES).map(([c,d])=>`<button onclick="setHCity('${c}',this)" style="padding:6px 13px;border-radius:99px;border:1.5px solid ${userProfile.city===c?'var(--amber)':'var(--border)'};background:${userProfile.city===c?'var(--ag)':'var(--surface2)'};color:${userProfile.city===c?'var(--amber)':'var(--ink3)'};font-size:12px;font-weight:600;cursor:pointer;transition:all .2s">${d.emoji} ${c}</button>`).join('')}</div></div>
+    <button onclick="shareProf()" style="width:100%;padding:13px;background:linear-gradient(135deg,#25D366,#128C7E);border:none;border-radius:9px;color:#fff;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.5px;box-shadow:0 4px 16px rgba(37,211,102,.22)">📲 Share My Profile</button>
+  `;
+}
+function editName(){const n=prompt('Enter your name:',userProfile.name);if(n&&n.trim()){userProfile.name=n.trim();localStorage.setItem('uprof',JSON.stringify(userProfile));renderProfile();toast('Profile updated!','success')}}
+function setHCity(c){userProfile.city=c;localStorage.setItem('uprof',JSON.stringify(userProfile));renderProfile();toast(`Home city: ${c} 🏙️`,'success')}
+function shareProf(){window.open(`https://wa.me/?text=${encodeURIComponent(`I'm ${userProfile.name} on Conductor AI 🚌🇳🇬\nI've reported ${userProfile.reports} fares and earned ${userProfile.points} Conductor Points!\nJoin at conductorAI.ng`)},'_blank')}
+
+// ════════════ TOAST ════════════
+function toast(msg,type='info',dur=3000){const colors={success:'rgba(34,197,94,.2)',error:'rgba(239,68,68,.18)',warn:'rgba(245,166,35,.18)',info:'rgba(59,130,246,.15)'};const borders={success:'rgba(34,197,94,.4)',error:'rgba(239,68,68,.4)',warn:'rgba(245,166,35,.4)',info:'rgba(59,130,246,.35)'};const txts={success:'var(--green)',error:'var(--red)',warn:'var(--amber)',info:'var(--blue)'};const icons={success:'✅',error:'❌',warn:'⚠️',info:'ℹ️'};const el=document.createElement('div');el.className='toast';el.style.background=colors[type];el.style.border=`1px solid ${borders[type]}`;el.style.color=txts[type];el.innerHTML=`${icons[type]} ${msg}`;document.getElementById('toasts').appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300)},dur)}
+
+// ════════════ CLOSE SUGGESTIONS ON OUTSIDE CLICK ════════════
+document.addEventListener('click',e=>{if(!e.target.closest('.ac-wrap')&&!e.target.closest('.input-group'))document.querySelectorAll('.sugg').forEach(b=>b.style.display='none')});
+
+// ════════════ POST BUTTON ENABLE ════════════
+document.getElementById('postTxt').addEventListener('input',function(){document.getElementById('postSubmit').style.opacity=this.value.trim()?'1':'0.5';document.getElementById('postSubmit').disabled=!this.value.trim()});
+
+// ════════════ RESTORE CONNECTION ════════════
+window.addEventListener('load',()=>{
+  const cfg = window.CONDUCTOR_CONFIG || {};
+  const u = (cfg.SUPABASE_URL || localStorage.getItem('sb_url') || '').trim();
+  const k = (cfg.SUPABASE_ANON_KEY || localStorage.getItem('sb_key') || '').trim();
+  if(u&&k){document.getElementById('sbUrl').value=u;document.getElementById('sbKey').value=k;connectSupabase()}
+});
+</script>
+</body>
+</html>

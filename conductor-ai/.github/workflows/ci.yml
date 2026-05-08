@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  deno:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+      - name: Format
+        run: deno fmt --check supabase/functions
+      - name: Lint
+        run: deno lint supabase/functions
+      - name: Typecheck
+        run: deno check supabase/functions/**/*.ts
+      - name: Test
+        run: deno test --allow-env supabase/functions
+

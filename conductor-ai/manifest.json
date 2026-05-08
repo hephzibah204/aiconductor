@@ -1,0 +1,48 @@
+{
+  "name": "Conductor AI — Naija Transport Oracle",
+  "short_name": "Conductor AI",
+  "description": "Real-time transport intelligence for Nigerian commuters. AI-powered fares, traffic, and community reports.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080B0F",
+  "theme_color": "#F5A623",
+  "orientation": "portrait-primary",
+  "lang": "en-NG",
+  "categories": ["travel", "utilities", "navigation"],
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "label": "Conductor AI fare calculator"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Calculate Fare",
+      "short_name": "Fare",
+      "url": "/?tab=calculator",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Traffic Update",
+      "short_name": "Traffic",
+      "url": "/?tab=traffic",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

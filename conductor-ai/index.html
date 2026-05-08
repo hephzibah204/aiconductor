@@ -1,0 +1,2638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Conductor AI · Naija Transport Oracle</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#080B0F;
+  --surface:#0F1318;
+  --surface2:#161B22;
+  --surface3:#1E2530;
+  --border:#242B36;
+  --border2:#2E3844;
+  --ink:#ECE8E0;
+  --ink2:#A8A098;
+  --ink3:#686058;
+  --amber:#F5A623;
+  --amber2:#E8920A;
+  --amber-glow:rgba(245,166,35,0.15);
+  --green:#22C55E;
+  --green-glow:rgba(34,197,94,0.12);
+  --red:#EF4444;
+  --blue:#3B82F6;
+  --r:14px;
+  --nav-h:64px;
+}
+
+html{scroll-behavior:smooth}
+
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Instrument Sans',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ─── NOISE OVERLAY ─── */
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity:.025;pointer-events:none;z-index:9999;
+}
+
+/* ─── AMBIENT BG ─── */
+.ambient{
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 70% 50% at 10% 0%,rgba(245,166,35,0.07) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 100%,rgba(34,197,94,0.05) 0%,transparent 60%);
+}
+
+/* ─── NAV ─── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:var(--nav-h);
+  background:rgba(8,11,15,0.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;
+}
+
+.nav-brand{
+  display:flex;align-items:center;gap:10px;
+  font-family:'Unbounded',sans-serif;
+  font-size:14px;font-weight:900;
+  color:var(--amber);letter-spacing:-0.5px;
+  cursor:pointer;
+}
+
+.nav-brand .bus-icon{
+  width:34px;height:34px;
+  background:linear-gradient(135deg,var(--amber),var(--amber2));
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+  box-shadow:0 4px 16px rgba(245,166,35,0.3);
+}
+
+.nav-tabs{
+  display:flex;gap:2px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:3px;
+}
+
+.nav-tab{
+  padding:6px 14px;border-radius:7px;
+  border:none;background:transparent;
+  color:var(--ink3);font-family:'Instrument Sans',sans-serif;
+  font-size:12px;font-weight:600;cursor:pointer;
+  transition:all .2s;letter-spacing:.3px;
+  white-space:nowrap;
+}
+
+.nav-tab.active{
+  background:var(--surface3);
+  color:var(--ink);
+  box-shadow:0 1px 4px rgba(0,0,0,0.4);
+}
+
+.nav-tab:hover:not(.active){color:var(--ink2)}
+
+.nav-live{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;color:var(--green);
+  font-weight:600;letter-spacing:1px;
+}
+
+.live-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--green);
+  animation:pulse 2s ease infinite;
+}
+
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.85)}}
+
+/* ─── PAGES ─── */
+.page{
+  display:none;
+  min-height:100vh;
+  padding-top:var(--nav-h);
+  position:relative;z-index:1;
+}
+.page.active{display:block}
+
+/* ─── HOME PAGE ─── */
+.hero{
+  padding:60px 20px 40px;
+  max-width:700px;margin:0 auto;text-align:center;
+}
+
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--amber-glow);
+  border:1px solid rgba(245,166,35,0.3);
+  border-radius:99px;padding:6px 16px;
+  font-size:12px;font-weight:600;color:var(--amber);
+  letter-spacing:.5px;margin-bottom:24px;
+}
+
+.hero h1{
+  font-family:'Unbounded',sans-serif;
+  font-size:clamp(28px,6vw,54px);
+  font-weight:900;line-height:1.1;
+  letter-spacing:-1.5px;
+  margin-bottom:16px;
+  background:linear-gradient(135deg,var(--ink) 0%,var(--ink2) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+
+.hero h1 span{
+  background:linear-gradient(135deg,var(--amber),var(--amber2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+
+.hero p{
+  font-size:16px;color:var(--ink2);line-height:1.7;
+  max-width:480px;margin:0 auto 32px;
+}
+
+.hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+.btn-primary{
+  padding:14px 28px;
+  background:linear-gradient(135deg,var(--amber),var(--amber2));
+  border:none;border-radius:10px;
+  color:#080B0F;font-family:'Unbounded',sans-serif;
+  font-size:12px;font-weight:700;cursor:pointer;
+  letter-spacing:.5px;
+  box-shadow:0 4px 24px rgba(245,166,35,0.35);
+  transition:all .2s;
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(245,166,35,0.45)}
+
+.btn-secondary{
+  padding:14px 28px;
+  background:var(--surface2);
+  border:1px solid var(--border2);border-radius:10px;
+  color:var(--ink);font-family:'Instrument Sans',sans-serif;
+  font-size:13px;font-weight:600;cursor:pointer;
+  transition:all .2s;
+}
+.btn-secondary:hover{border-color:var(--amber);color:var(--amber)}
+
+/* Stats bar */
+.stats-bar{
+  display:flex;gap:0;
+  max-width:700px;margin:40px auto;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;
+}
+
+.stat-item{
+  flex:1;padding:20px;text-align:center;
+  border-right:1px solid var(--border);
+}
+.stat-item:last-child{border-right:none}
+.stat-num{
+  font-family:'Unbounded',sans-serif;
+  font-size:22px;font-weight:900;color:var(--amber);
+  letter-spacing:-1px;
+}
+.stat-label{font-size:11px;color:var(--ink3);margin-top:4px;font-weight:500;letter-spacing:.5px}
+
+/* Feature cards */
+.features{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:12px;max-width:800px;margin:0 auto;padding:0 20px 60px;
+}
+
+.feat-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);padding:20px;
+  cursor:pointer;transition:all .25s;
+  position:relative;overflow:hidden;
+}
+
+.feat-card::before{
+  content:'';position:absolute;inset:0;
+  background:var(--amber-glow);
+  opacity:0;transition:opacity .25s;
+}
+
+.feat-card:hover{border-color:rgba(245,166,35,0.4);transform:translateY(-3px)}
+.feat-card:hover::before{opacity:1}
+
+.feat-icon{font-size:28px;margin-bottom:12px}
+.feat-title{
+  font-family:'Unbounded',sans-serif;
+  font-size:12px;font-weight:700;color:var(--ink);
+  letter-spacing:-.3px;margin-bottom:6px;
+}
+.feat-desc{font-size:12px;color:var(--ink3);line-height:1.6}
+
+/* ─── TRAFFIC PAGE ─── */
+.traffic-wrap{max-width:560px;margin:0 auto;padding:32px 20px 60px}
+
+.section-head{
+  margin-bottom:24px;
+}
+.section-head h2{
+  font-family:'Unbounded',sans-serif;
+  font-size:20px;font-weight:900;letter-spacing:-0.5px;
+  color:var(--ink);margin-bottom:4px;
+}
+.section-head p{font-size:13px;color:var(--ink3)}
+
+.city-scroll{
+  display:flex;gap:8px;overflow-x:auto;
+  padding-bottom:4px;margin-bottom:20px;
+  scrollbar-width:none;
+}
+.city-scroll::-webkit-scrollbar{display:none}
+
+.city-pill{
+  flex-shrink:0;padding:8px 16px;
+  border:1.5px solid var(--border);
+  border-radius:99px;background:var(--surface);
+  color:var(--ink3);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.city-pill.active{
+  border-color:var(--amber);
+  background:var(--amber-glow);
+  color:var(--amber);
+}
+
+.route-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);padding:20px;
+  margin-bottom:12px;
+}
+
+.route-inputs{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+
+.input-group{position:relative}
+
+.input-label{
+  font-size:10px;font-weight:700;letter-spacing:2px;
+  color:var(--ink3);text-transform:uppercase;margin-bottom:6px;
+}
+
+.route-input{
+  width:100%;padding:12px 14px;
+  background:var(--surface2);
+  border:1.5px solid var(--border);
+  border-radius:10px;color:var(--ink);
+  font-family:'Instrument Sans',sans-serif;font-size:14px;
+  outline:none;transition:border-color .2s;
+}
+.route-input:focus{border-color:var(--amber)}
+.route-input::placeholder{color:var(--ink3)}
+
+.swap-btn{
+  align-self:center;width:36px;height:36px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:50%;cursor:pointer;color:var(--amber);
+  font-size:16px;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.swap-btn:hover{background:var(--amber-glow);border-color:var(--amber)}
+
+.check-btn{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,var(--amber),var(--amber2));
+  border:none;border-radius:10px;
+  color:#080B0F;font-family:'Unbounded',sans-serif;
+  font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.5px;
+  box-shadow:0 4px 20px rgba(245,166,35,0.3);
+  transition:all .2s;
+}
+.check-btn:hover:not(:disabled){transform:translateY(-1px)}
+.check-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* Traffic result */
+.result-card{
+  border-radius:var(--r);padding:20px;
+  margin-top:16px;border:2px solid;
+  animation:slideUp .35s ease;
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.result-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.result-badge{
+  display:inline-block;padding:4px 12px;border-radius:99px;
+  font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;
+}
+.result-eta{
+  font-family:'Unbounded',sans-serif;
+  font-size:32px;font-weight:900;line-height:1;letter-spacing:-1px;
+}
+.result-dist{font-size:12px;color:var(--ink3);margin-top:2px}
+
+.pidgin-box{
+  padding:12px 14px;border-radius:10px;
+  background:rgba(0,0,0,0.3);
+  font-size:13px;line-height:1.6;color:var(--ink2);
+  border-left:3px solid;margin-bottom:16px;
+}
+
+/* Fare grid */
+.fare-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+}
+.fare-item{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:12px;
+  display:flex;align-items:center;gap:10px;
+}
+.fare-icon{font-size:20px}
+.fare-name{font-size:11px;color:var(--ink3);font-weight:500}
+.fare-price{
+  font-family:'Unbounded',sans-serif;
+  font-size:14px;font-weight:700;color:var(--amber);
+  margin-top:1px;
+}
+
+/* Tabs inside pages */
+.inner-tabs{
+  display:flex;gap:6px;margin-bottom:16px;
+}
+.inner-tab{
+  padding:8px 14px;border-radius:8px;
+  border:1px solid var(--border);
+  background:transparent;color:var(--ink3);
+  font-family:'Instrument Sans',sans-serif;
+  font-size:12px;font-weight:600;cursor:pointer;
+  transition:all .2s;
+}
+.inner-tab.active{
+  background:var(--amber-glow);
+  border-color:rgba(245,166,35,.4);
+  color:var(--amber);
+}
+
+/* Tips */
+.tip-item{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;
+  font-size:13px;color:var(--ink2);line-height:1.6;
+  margin-bottom:8px;
+  border-left:3px solid var(--border2);
+}
+
+/* ─── CHATBOT PAGE ─── */
+.chat-wrap{
+  display:flex;flex-direction:column;
+  height:calc(100vh - var(--nav-h));
+  max-width:680px;margin:0 auto;
+  position:relative;
+}
+
+.chat-header{
+  padding:16px 20px 12px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+
+.chat-agent{display:flex;align-items:center;gap:10px}
+.agent-avatar{
+  width:40px;height:40px;border-radius:12px;
+  background:linear-gradient(135deg,var(--amber),var(--amber2));
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  box-shadow:0 4px 16px rgba(245,166,35,.3);
+}
+.agent-name{
+  font-family:'Unbounded',sans-serif;
+  font-size:13px;font-weight:700;color:var(--amber);
+}
+.agent-status{font-size:11px;color:var(--ink3);margin-top:1px}
+
+.mode-pills{display:flex;gap:6px}
+.mode-pill{
+  padding:5px 12px;border-radius:99px;
+  border:1px solid var(--border);
+  background:transparent;color:var(--ink3);
+  font-size:11px;font-weight:600;cursor:pointer;
+  transition:all .2s;
+}
+.mode-pill.active-assistant{border-color:var(--amber);background:var(--amber-glow);color:var(--amber)}
+.mode-pill.active-quiz{border-color:var(--green);background:var(--green-glow);color:var(--green)}
+.mode-pill.active-report{border-color:var(--red);background:rgba(239,68,68,.1);color:var(--red)}
+
+.chat-messages{
+  flex:1;overflow-y:auto;
+  padding:20px;
+  display:flex;flex-direction:column;gap:14px;
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+}
+
+.msg-row{display:flex;gap:8px;align-items:flex-end}
+.msg-row.user{flex-direction:row-reverse}
+
+.msg-avatar{
+  width:30px;height:30px;border-radius:8px;
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;
+  background:var(--surface2);border:1px solid var(--border);
+}
+
+.msg-bubble{
+  max-width:75%;padding:12px 16px;
+  border-radius:16px;font-size:14px;line-height:1.7;
+  animation:slideUp .3s ease;
+}
+.msg-bubble.ai{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px 16px 16px 4px;color:var(--ink2);
+}
+.msg-bubble.user{
+  background:linear-gradient(135deg,var(--amber),var(--amber2));
+  color:#080B0F;font-weight:600;
+  border-radius:16px 16px 4px 16px;
+}
+.msg-time{font-size:10px;color:var(--ink3);margin-top:4px;padding:0 4px}
+
+.typing-indicator{
+  display:flex;gap:5px;align-items:center;padding:4px 0;
+}
+.typing-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--amber);opacity:.7;
+  animation:bounce 1.2s ease infinite;
+}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-7px)}}
+
+.quick-prompts{
+  padding:0 20px 8px;
+  display:flex;gap:8px;overflow-x:auto;
+  scrollbar-width:none;flex-shrink:0;
+}
+.quick-prompts::-webkit-scrollbar{display:none}
+
+.quick-chip{
+  flex-shrink:0;padding:7px 14px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:99px;color:var(--ink2);
+  font-size:12px;font-weight:500;cursor:pointer;
+  white-space:nowrap;transition:all .2s;
+}
+.quick-chip:hover{border-color:var(--amber);color:var(--amber)}
+
+.chat-input-wrap{
+  padding:12px 20px 20px;
+  border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+
+.chat-input-row{display:flex;gap:10px;align-items:flex-end}
+
+.chat-textarea{
+  flex:1;padding:12px 16px;
+  background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:12px;color:var(--ink);
+  font-family:'Instrument Sans',sans-serif;font-size:14px;
+  line-height:1.5;resize:none;outline:none;max-height:120px;
+  transition:border-color .2s;
+}
+.chat-textarea:focus{border-color:var(--amber)}
+.chat-textarea::placeholder{color:var(--ink3)}
+
+.send-btn{
+  width:44px;height:44px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--amber),var(--amber2));
+  border:none;cursor:pointer;font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(245,166,35,.3);
+  transition:all .2s;
+}
+.send-btn:hover{transform:scale(1.05)}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+.score-badge{
+  background:var(--green-glow);border:1px solid rgba(34,197,94,.3);
+  border-radius:20px;padding:4px 12px;
+  font-size:12px;color:var(--green);font-weight:600;
+}
+
+/* ─── REPORT PAGE ─── */
+.report-wrap{max-width:560px;margin:0 auto;padding:32px 20px 60px}
+
+.progress-wrap{margin-bottom:28px}
+.progress-meta{
+  display:flex;justify-content:space-between;
+  font-size:11px;color:var(--ink3);margin-bottom:8px;
+  font-weight:600;letter-spacing:.5px;
+}
+.progress-track{
+  height:3px;background:var(--border);border-radius:99px;overflow:hidden;
+}
+.progress-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--amber),var(--amber2));
+  border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1);
+}
+.step-dots{display:flex;gap:5px;justify-content:center;margin-top:10px}
+.dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--border);transition:all .3s;
+}
+.dot.active{background:var(--amber);transform:scale(1.3)}
+.dot.done{background:var(--green)}
+
+.r-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:24px;margin-bottom:14px;
+  animation:slideUp .35s ease;
+}
+
+.r-step-label{
+  font-size:10px;font-weight:700;letter-spacing:2px;
+  color:var(--amber);text-transform:uppercase;margin-bottom:8px;
+}
+.r-question{
+  font-family:'Unbounded',sans-serif;
+  font-size:18px;font-weight:700;color:var(--ink);
+  line-height:1.3;letter-spacing:-.3px;margin-bottom:4px;
+}
+.r-sub{font-size:13px;color:var(--ink3);margin-bottom:20px}
+
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt-grid.three{grid-template-columns:1fr 1fr 1fr}
+.opt-grid.single{grid-template-columns:1fr}
+
+.opt-btn{
+  padding:14px 10px;border:2px solid var(--border);
+  border-radius:12px;background:var(--surface2);
+  color:var(--ink2);font-family:'Instrument Sans',sans-serif;
+  font-size:13px;font-weight:500;cursor:pointer;
+  text-align:center;transition:all .2s;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+}
+.opt-btn .o-icon{font-size:22px}
+.opt-btn:hover{border-color:var(--amber);background:var(--amber-glow);color:var(--ink)}
+.opt-btn.sel{border-color:var(--amber);background:var(--amber-glow);color:var(--amber)}
+
+.r-input{
+  width:100%;padding:12px 16px;
+  background:var(--surface2);border:2px solid var(--border);
+  border-radius:10px;color:var(--ink);
+  font-family:'Instrument Sans',sans-serif;font-size:15px;
+  outline:none;transition:border-color .2s;
+}
+.r-input:focus{border-color:var(--amber)}
+.r-input::placeholder{color:var(--ink3)}
+
+.fare-wrap{position:relative}
+.fare-sym{
+  position:absolute;left:16px;top:50%;transform:translateY(-50%);
+  font-family:'Unbounded',sans-serif;font-size:18px;
+  font-weight:700;color:var(--amber);pointer-events:none;
+}
+.fare-big{padding-left:38px;font-family:'Unbounded',sans-serif;font-size:24px;font-weight:700}
+
+.chips-wrap{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.r-chip{
+  padding:6px 14px;border:1.5px solid var(--border);
+  border-radius:99px;background:var(--surface2);
+  font-size:12px;font-weight:600;color:var(--ink3);cursor:pointer;transition:all .2s;
+}
+.r-chip:hover,.r-chip.sel{border-color:var(--amber);background:var(--amber-glow);color:var(--amber)}
+
+.r-nav{display:flex;gap:8px;margin-top:18px}
+.r-back{
+  padding:12px 18px;border:1.5px solid var(--border);border-radius:10px;
+  background:transparent;color:var(--ink3);font-family:'Instrument Sans',sans-serif;
+  font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.r-back:hover{border-color:var(--ink2);color:var(--ink2)}
+.r-next{
+  flex:1;padding:13px;
+  background:linear-gradient(135deg,var(--amber),var(--amber2));
+  border:none;border-radius:10px;
+  color:#080B0F;font-family:'Unbounded',sans-serif;
+  font-size:11px;font-weight:700;cursor:pointer;
+  letter-spacing:.5px;
+  box-shadow:0 4px 16px rgba(245,166,35,.25);
+  transition:all .2s;
+}
+.r-next:hover:not(:disabled){transform:translateY(-1px)}
+.r-next:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+.info-box{
+  padding:12px 14px;border-radius:10px;
+  background:rgba(245,166,35,.08);
+  border:1px solid rgba(245,166,35,.2);
+  font-size:12px;color:rgba(245,166,35,.9);
+  display:flex;gap:8px;margin-bottom:16px;line-height:1.6;
+}
+
+.sugg-box{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;z-index:50;
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+}
+.sugg-item{
+  padding:10px 14px;font-size:14px;cursor:pointer;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;color:var(--ink2);
+  transition:background .15s;
+}
+.sugg-item:last-child{border-bottom:none}
+.sugg-item:hover{background:var(--amber-glow);color:var(--amber)}
+
+/* Summary */
+.sum-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:11px 0;border-bottom:1px solid var(--border);font-size:13px;
+}
+.sum-row:last-child{border-bottom:none}
+.sum-label{font-size:11px;color:var(--ink3);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.sum-value{font-weight:600;color:var(--ink)}
+.sum-fare{
+  font-family:'Unbounded',sans-serif;
+  font-size:22px;font-weight:900;color:var(--amber);
+}
+
+/* Success */
+.success-wrap{text-align:center;padding:20px 0}
+.success-icon{
+  width:72px;height:72px;border-radius:50%;
+  background:var(--green-glow);border:1px solid rgba(34,197,94,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;margin:0 auto 18px;
+  animation:popIn .5s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.success-title{
+  font-family:'Unbounded',sans-serif;
+  font-size:22px;font-weight:900;color:var(--ink);margin-bottom:6px;letter-spacing:-.5px;
+}
+.success-msg{font-size:14px;color:var(--ink3);line-height:1.6;margin-bottom:20px;max-width:320px;margin-left:auto;margin-right:auto}
+.pidgin-badge{
+  display:inline-block;
+  background:var(--amber-glow);border:1px solid rgba(245,166,35,.3);
+  border-radius:99px;padding:8px 20px;
+  font-size:13px;color:var(--amber);font-weight:600;margin-bottom:24px;
+}
+.whatsapp-btn{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,#25D366,#128C7E);
+  border:none;border-radius:10px;color:#fff;
+  font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;
+  cursor:pointer;margin-bottom:8px;letter-spacing:.5px;
+  box-shadow:0 4px 20px rgba(37,211,102,.25);transition:all .2s;
+}
+.whatsapp-btn:hover{transform:translateY(-1px)}
+.restart-btn{
+  width:100%;padding:13px;background:transparent;
+  border:1.5px solid var(--border);border-radius:10px;
+  color:var(--ink3);font-family:'Instrument Sans',sans-serif;
+  font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.restart-btn:hover{border-color:var(--ink2);color:var(--ink2)}
+
+/* ─── LEADERBOARD PAGE ─── */
+.lb-wrap{max-width:640px;margin:0 auto;padding:32px 20px 60px}
+
+.lb-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:24px;
+}
+
+.lb-filters{display:flex;gap:6px;margin-bottom:20px}
+.lb-filter{
+  padding:7px 14px;border-radius:8px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--ink3);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.lb-filter.active{background:var(--amber-glow);border-color:rgba(245,166,35,.4);color:var(--amber)}
+
+.lb-route-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px;margin-bottom:10px;
+  display:flex;align-items:center;gap:14px;
+  transition:border-color .2s;cursor:pointer;
+}
+.lb-route-card:hover{border-color:var(--border2)}
+
+.lb-rank{
+  font-family:'Unbounded',sans-serif;
+  font-size:13px;font-weight:900;color:var(--ink3);
+  width:24px;flex-shrink:0;
+}
+.lb-rank.gold{color:#FFD700}
+.lb-rank.silver{color:#C0C0C0}
+.lb-rank.bronze{color:#CD7F32}
+
+.lb-route-info{flex:1}
+.lb-route-name{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:3px}
+.lb-route-meta{font-size:11px;color:var(--ink3)}
+
+.lb-fare{text-align:right;flex-shrink:0}
+.lb-fare-amt{
+  font-family:'Unbounded',sans-serif;
+  font-size:16px;font-weight:900;color:var(--amber);
+}
+.lb-fare-mode{font-size:11px;color:var(--ink3);margin-top:2px}
+
+.lb-transport-icon{font-size:22px;flex-shrink:0}
+
+.trend-up{color:var(--red);font-size:11px;font-weight:700}
+.trend-down{color:var(--green);font-size:11px;font-weight:700}
+.trend-same{color:var(--ink3);font-size:11px}
+
+/* Alert strip */
+.alert-strip{
+  background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+  border-radius:10px;padding:12px 16px;
+  font-size:13px;color:#FCA5A5;
+  display:flex;gap:10px;align-items:center;margin-bottom:16px;
+}
+
+/* ─── GENERAL UTILS ─── */
+.autocomplete-wrap{position:relative}
+
+strong.hi{color:var(--amber)}
+
+.mb8{margin-bottom:8px}
+.mb16{margin-bottom:16px}
+.mt16{margin-top:16px}
+
+/* Mobile responsive nav */
+@media(max-width:600px){
+  .nav-tabs{display:none}
+  .nav-live span{display:none}
+  .hero h1{font-size:28px}
+  .stats-bar{flex-direction:column}
+  .stat-item{border-right:none;border-bottom:1px solid var(--border)}
+  .stat-item:last-child{border-bottom:none}
+  .page{padding-bottom:70px}
+}
+
+/* Post button enabled state */
+#postBtn:not(:disabled){opacity:1!important;background:var(--amber)!important}
+
+/* Feed type badge */
+.type-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.5px}
+</style>
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#F5A623"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Conductor AI"/>
+</head>
+<body>
+<div class="ambient"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand" onclick="showPage('home')">
+    <div class="bus-icon">🚌</div>
+    Conductor
+  </div>
+  <div class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" id="tab-home" onclick="showPage('home')">Home</button>
+    <button class="nav-tab" id="tab-traffic" onclick="showPage('traffic')">Traffic</button>
+    <button class="nav-tab" id="tab-chat" onclick="showPage('chat')">AI Chat</button>
+    <button class="nav-tab" id="tab-report" onclick="showPage('report')">Report</button>
+    <button class="nav-tab" id="tab-leaderboard" onclick="showPage('leaderboard')">Fares</button>
+    <button class="nav-tab" id="tab-calculator" onclick="showPage('calculator')">Calc</button>
+    <button class="nav-tab" id="tab-community" onclick="showPage('community')">Feed</button>
+    <button class="nav-tab" id="tab-profile" onclick="showPage('profile')">Profile</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button onclick="toggleTheme()" id="themeBtn" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .2s" title="Toggle theme">🌙</button>
+    <div class="nav-live">
+      <div class="live-dot"></div>
+      <span>LIVE</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;margin-left:auto;padding-left:16px">
+    <a href="app-live.html" style="padding:6px 12px;border-radius:7px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);color:#22C55E;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap">🌐 Live App</a>
+    <a href="admin.html" style="padding:6px 12px;border-radius:7px;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.25);color:#F5A623;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap">⚙️ Admin</a>
+  </div>
+</nav>
+<!-- Toast -->
+<div id="toastContainer" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9998;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none"></div>
+
+<!-- ════════════════════════════════════════
+     HOME PAGE
+════════════════════════════════════════ -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="hero-badge">🇳🇬 Built for Naija Roads</div>
+    <h1>Who Sabi<br/><span>Road?</span></h1>
+    <p>Real-time traffic, AI-powered fare estimates, and crowdsourced transport data for every major Nigerian city.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="showPage('traffic')">🔮 Check Traffic</button>
+      <button class="btn-secondary" onclick="showPage('chat')">💬 Ask AI</button>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-num" id="statReports">2,841</div>
+      <div class="stat-label">Fares Reported</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">5</div>
+      <div class="stat-label">Cities Covered</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="statRoutes">186</div>
+      <div class="stat-label">Routes Tracked</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="statUsers">14k</div>
+      <div class="stat-label">Users Helped</div>
+    </div>
+  </div>
+
+  <div class="features">
+    <div class="feat-card" onclick="showPage('traffic')">
+      <div class="feat-icon">🔮</div>
+      <div class="feat-title">Traffic Oracle</div>
+      <div class="feat-desc">Get real-time traffic levels, ETAs, and route advice in Pidgin for any Nigerian city.</div>
+    </div>
+    <div class="feat-card" onclick="showPage('chat')">
+      <div class="feat-icon">🤖</div>
+      <div class="feat-title">AI Fare Chat</div>
+      <div class="feat-desc">Ask Conductor AI anything about transport costs. Searches the internet for fresh prices.</div>
+    </div>
+    <div class="feat-card" onclick="showPage('chat');setChatMode('quiz')">
+      <div class="feat-icon">🎯</div>
+      <div class="feat-title">Fare Quiz</div>
+      <div class="feat-desc">Test your knowledge of Nigerian transport fares. Track your score and beat your record.</div>
+    </div>
+    <div class="feat-card" onclick="showPage('report')">
+      <div class="feat-icon">📍</div>
+      <div class="feat-title">Report a Fare</div>
+      <div class="feat-desc">Paid a fare recently? Report it and help thousands of Nigerians get accurate data.</div>
+    </div>
+    <div class="feat-card" onclick="showPage('calculator')">
+      <div class="feat-icon">🧮</div>
+      <div class="feat-title">Fare Calculator</div>
+      <div class="feat-desc">Compare all transport modes side-by-side for any route. Find the best deal instantly.</div>
+    </div>
+    <div class="feat-card" onclick="showPage('community')">
+      <div class="feat-icon">📢</div>
+      <div class="feat-title">Community Feed</div>
+      <div class="feat-desc">See what Nigerians are reporting right now — live fare updates, road gist & alerts.</div>
+    </div>
+    <div class="feat-card" onclick="showPage('profile')">
+      <div class="feat-icon">👤</div>
+      <div class="feat-title">My Profile</div>
+      <div class="feat-desc">Save your favourite routes, track your reports, and see your contribution score.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     FARE CALCULATOR PAGE
+════════════════════════════════════════ -->
+<div class="page" id="page-calculator">
+  <div class="traffic-wrap">
+    <div class="section-head">
+      <h2>🧮 Fare Calculator</h2>
+      <p>Compare all transport options for your route</p>
+    </div>
+    <div class="city-scroll" id="calcCityScroll">
+      <button class="city-pill active" onclick="selectCalcCity('Lagos',this)">🌊 Lagos</button>
+      <button class="city-pill" onclick="selectCalcCity('Abuja',this)">🏛️ Abuja</button>
+      <button class="city-pill" onclick="selectCalcCity('Port Harcourt',this)">⛽ PH</button>
+      <button class="city-pill" onclick="selectCalcCity('Kano',this)">🕌 Kano</button>
+      <button class="city-pill" onclick="selectCalcCity('Ibadan',this)">🌄 Ibadan</button>
+    </div>
+    <div class="route-card">
+      <div class="route-inputs">
+        <div class="input-group">
+          <div class="input-label">From</div>
+          <div class="autocomplete-wrap">
+            <input class="route-input" id="cFrom" placeholder="Departure" oninput="handleCFrom(this.value)" autocomplete="off"/>
+            <div class="sugg-box" id="cFromSugg" style="display:none"></div>
+          </div>
+        </div>
+        <button class="swap-btn" onclick="swapCalcInputs()">⇅</button>
+        <div class="input-group">
+          <div class="input-label">To</div>
+          <div class="autocomplete-wrap">
+            <input class="route-input" id="cTo" placeholder="Destination" oninput="handleCTo(this.value)" autocomplete="off"/>
+            <div class="sugg-box" id="cToSugg" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Passengers & time -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div>
+          <div class="input-label" style="margin-bottom:6px">Passengers</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button onclick="changePassengers(-1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--ink);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+            <span id="passengerCount" style="font-family:'Unbounded',sans-serif;font-weight:700;font-size:16px;min-width:20px;text-align:center">1</span>
+            <button onclick="changePassengers(1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--ink);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+          </div>
+        </div>
+        <div>
+          <div class="input-label" style="margin-bottom:6px">Travel Time</div>
+          <select id="calcTimeSlot" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--ink);font-family:inherit;font-size:12px;outline:none">
+            <option>Morning Rush (7–9am)</option>
+            <option>Mid Morning (9–11am)</option>
+            <option>Afternoon (12–3pm)</option>
+            <option selected>Evening Rush (4–7pm)</option>
+            <option>Night (7pm+)</option>
+          </select>
+        </div>
+      </div>
+      <button class="check-btn" id="calcBtn" onclick="runCalculator()" disabled>🧮 Calculate Fares</button>
+    </div>
+    <div id="calcResult"></div>
+    <!-- Saved routes -->
+    <div id="savedRoutesSection" style="margin-top:24px"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     COMMUNITY FEED PAGE
+════════════════════════════════════════ -->
+<div class="page" id="page-community">
+  <div class="lb-wrap">
+    <div class="section-head">
+      <h2>📢 Community Feed</h2>
+      <p>Live reports from Nigerians on the road right now</p>
+    </div>
+    <!-- Post a quick update -->
+    <div class="route-card" style="margin-bottom:20px">
+      <div style="font-size:12px;font-weight:700;color:var(--amber);letter-spacing:1px;margin-bottom:10px">SHARE A ROAD UPDATE</div>
+      <textarea id="feedPostInput" placeholder="Wetin dey happen for road? e.g. 'Oshodi go-slow bad right now o!'" style="width:100%;padding:12px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--ink);font-family:inherit;font-size:13px;resize:none;outline:none;line-height:1.6" rows="2" oninput="document.getElementById('postBtn').disabled=!this.value.trim()"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <select id="feedCity" style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--ink);font-family:inherit;font-size:12px;outline:none;flex:1">
+          <option>Lagos</option><option>Abuja</option><option>Port Harcourt</option><option>Kano</option><option>Ibadan</option>
+        </select>
+        <select id="feedType" style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--ink);font-family:inherit;font-size:12px;outline:none;flex:1">
+          <option value="traffic">🚦 Traffic</option>
+          <option value="fare">💰 Fare Update</option>
+          <option value="fuel">⛽ Fuel</option>
+          <option value="accident">🚨 Accident</option>
+          <option value="general">💬 General</option>
+        </select>
+        <button id="postBtn" onclick="postFeedUpdate()" disabled style="padding:8px 16px;background:var(--amber);border:none;border-radius:8px;color:#080B0F;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;opacity:.5;transition:all .2s" oninput="">Post</button>
+      </div>
+    </div>
+    <!-- Feed filters -->
+    <div class="lb-filters" id="feedFilters">
+      <button class="lb-filter active" onclick="filterFeed('all',this)">All</button>
+      <button class="lb-filter" onclick="filterFeed('traffic',this)">🚦 Traffic</button>
+      <button class="lb-filter" onclick="filterFeed('fare',this)">💰 Fares</button>
+      <button class="lb-filter" onclick="filterFeed('fuel',this)">⛽ Fuel</button>
+      <button class="lb-filter" onclick="filterFeed('accident',this)">🚨 Incident</button>
+    </div>
+    <div id="feedContent"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PROFILE PAGE
+════════════════════════════════════════ -->
+<div class="page" id="page-profile">
+  <div class="lb-wrap">
+    <div id="profileContent"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     TRAFFIC PAGE
+════════════════════════════════════════ -->
+<div class="page" id="page-traffic">
+  <div class="traffic-wrap">
+    <div class="section-head">
+      <h2>Traffic Oracle</h2>
+      <p>Check any route across Nigerian cities</p>
+    </div>
+
+    <!-- City selector -->
+    <div class="city-scroll" id="trafficCityScroll">
+      <button class="city-pill active" onclick="selectTrafficCity('Lagos',this)">🌊 Lagos</button>
+      <button class="city-pill" onclick="selectTrafficCity('Abuja',this)">🏛️ Abuja</button>
+      <button class="city-pill" onclick="selectTrafficCity('Port Harcourt',this)">⛽ Port Harcourt</button>
+      <button class="city-pill" onclick="selectTrafficCity('Kano',this)">🕌 Kano</button>
+      <button class="city-pill" onclick="selectTrafficCity('Ibadan',this)">🌄 Ibadan</button>
+    </div>
+
+    <!-- Live alerts -->
+    <div id="trafficAlerts"></div>
+
+    <!-- Route check -->
+    <div class="route-card">
+      <div class="route-inputs">
+        <div class="input-group">
+          <div class="input-label">From</div>
+          <div class="autocomplete-wrap">
+            <input class="route-input" id="tFrom" placeholder="e.g. Ikeja" oninput="handleTFrom(this.value)" autocomplete="off"/>
+            <div class="sugg-box" id="tFromSugg" style="display:none"></div>
+          </div>
+        </div>
+        <button class="swap-btn" onclick="swapTrafficInputs()">⇅</button>
+        <div class="input-group">
+          <div class="input-label">To</div>
+          <div class="autocomplete-wrap">
+            <input class="route-input" id="tTo" placeholder="e.g. Victoria Island" oninput="handleTTo(this.value)" autocomplete="off"/>
+            <div class="sugg-box" id="tToSugg" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+      <button class="check-btn" id="checkBtn" onclick="checkTraffic()" disabled>🔮 Check Road</button>
+    </div>
+
+    <!-- Result -->
+    <div id="trafficResult"></div>
+
+    <!-- Inner tabs for result details -->
+    <div id="trafficTabs" style="display:none">
+      <div class="inner-tabs">
+        <button class="inner-tab active" id="tabFares" onclick="switchTrafficTab('fares')">💰 Fares</button>
+        <button class="inner-tab" id="tabTips" onclick="switchTrafficTab('tips')">🗺️ Route Tips</button>
+        <button class="inner-tab" id="tabAlternate" onclick="switchTrafficTab('alternate')">🔀 Alternatives</button>
+      </div>
+      <div id="trafficTabContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     CHAT PAGE
+════════════════════════════════════════ -->
+<div class="page" id="page-chat">
+  <div class="chat-wrap">
+    <div class="chat-header">
+      <div class="chat-agent">
+        <div class="agent-avatar">🚌</div>
+        <div>
+          <div class="agent-name">Conductor AI</div>
+          <div class="agent-status" id="agentStatus">🟢 Online · searching live prices</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="score-badge" id="quizScoreBadge" style="display:none">✅ 0/0</div>
+        <div class="mode-pills">
+          <button class="mode-pill active-assistant" id="pillAssistant" onclick="setChatMode('assistant')">💰</button>
+          <button class="mode-pill" id="pillQuiz" onclick="setChatMode('quiz')">🎯</button>
+          <button class="mode-pill" id="pillReport" onclick="setChatMode('report')">📍</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages"></div>
+
+    <div class="quick-prompts" id="quickPrompts">
+      <button class="quick-chip" onclick="sendChat('How much is Keke from Ikeja to Oshodi?')">🛺 Keke Ikeja → Oshodi</button>
+      <button class="quick-chip" onclick="sendChat('What is Uber surge fare during Lagos rain?')">🌧️ Lagos rain surge</button>
+      <button class="quick-chip" onclick="sendChat('Quiz me on Nigerian transport fares!')">🎯 Quiz me!</button>
+      <button class="quick-chip" onclick="sendChat('Cheapest way from Lekki to Lagos Island?')">💸 Cheapest route</button>
+      <button class="quick-chip" onclick="sendChat('What are typical Abuja transport fares?')">🏛️ Abuja fares</button>
+      <button class="quick-chip" onclick="sendChat('How much is BRT from Oshodi to CMS?')">🚌 BRT fares</button>
+    </div>
+
+    <div class="chat-input-wrap">
+      <div class="chat-input-row">
+        <textarea class="chat-textarea" id="chatInput" placeholder="Ask about any route in Nigeria..." rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';document.getElementById('sendBtn').disabled=!this.value.trim()"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendChat()" disabled>➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     REPORT PAGE
+════════════════════════════════════════ -->
+<div class="page" id="page-report">
+  <div class="report-wrap">
+    <div class="section-head">
+      <h2>Report a Fare</h2>
+      <p>Help thousands of Nigerians with real transport data</p>
+    </div>
+    <div class="progress-wrap" id="rProgressWrap">
+      <div class="progress-meta">
+        <span id="rStepLabel">Step 1 of 9</span>
+        <span id="rPctLabel">11%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="rProgressFill" style="width:11%"></div>
+      </div>
+      <div class="step-dots" id="rStepDots"></div>
+    </div>
+    <div id="rContent"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     LEADERBOARD / FARE INDEX PAGE
+════════════════════════════════════════ -->
+<div class="page" id="page-leaderboard">
+  <div class="lb-wrap">
+    <div class="section-head">
+      <h2>Naija Fare Index</h2>
+      <p>Most expensive routes · cheapest options · trending fares</p>
+    </div>
+
+    <div class="alert-strip">
+      🚨 <span>Surge alert: Lagos Uber prices up 40% due to fuel scarcity in Lekki corridor</span>
+    </div>
+
+    <div class="lb-filters">
+      <button class="lb-filter active" onclick="filterLB('all',this)">All Cities</button>
+      <button class="lb-filter" onclick="filterLB('Lagos',this)">Lagos</button>
+      <button class="lb-filter" onclick="filterLB('Abuja',this)">Abuja</button>
+      <button class="lb-filter" onclick="filterLB('PH',this)">Port Harcourt</button>
+    </div>
+
+    <div id="lbContent"></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════
+const CITIES_DATA = {
+  Lagos: {
+    emoji:'🌊',
+    areas:['Ikeja','Victoria Island','Lekki','Surulere','Yaba','Oshodi','Ikorodu','Apapa','Ajah','Festac','Maryland','Ojota','Berger','Agege','Mushin','Third Mainland Bridge','Lagos Island','Ojuelegba','Gbagada','Magodo','Mile 2','Alaba','Badagry','CMS','Alausa','Ojodu','Sangotedo','Chevron','Lekki Phase 1'],
+    fares:{keke:250,danfo:300,okada:400,taxi:1200,uber:1800},
+    alerts:['⚡ LASTMA heavy on Apongbon bridge till 8pm','🌧️ Rain expected 4pm — expect 3x travel time on Third Mainland','🚧 Road work on Ozumba Mbadiwe — avoid until Saturday'],
+  },
+  Abuja: {
+    emoji:'🏛️',
+    areas:['Wuse','Garki','Maitama','Asokoro','Gwarinpa','Kubwa','Nyanya','Lugbe','Karu','Central Area','Area 1','Area 3','Gudu','Katampe','Jabi','Utako','Wuse 2','Durumi','Apo','Lifecamp','Dei Dei','Bwari'],
+    fares:{keke:300,danfo:350,okada:450,taxi:1500,uber:2000},
+    alerts:['🚦 Roundabout at Berger closed for repair till Thursday','🏎️ Roads clear most of the day — good time to travel'],
+  },
+  'Port Harcourt': {
+    emoji:'⛽',
+    areas:['GRA Phase 1','GRA Phase 2','Rumuola','Diobu','Trans Amadi','Eleme','Rumuokoro','Mile 1','Mile 3','Borokiri','Old GRA','Rumuibekwe','Oyigbo','Waterlines','Ada George'],
+    fares:{keke:200,danfo:250,okada:350,taxi:1100,uber:1600},
+    alerts:['⛽ Fuel queue blocking Rumuokoro junction','🌊 Waterlines road flooded — use alternative routes'],
+  },
+  Kano: {
+    emoji:'🕌',
+    areas:['Fagge','Gwale','Nasarawa','Tarauni','Kano City','Bompai','Sabon Gari','Yankaba','Zoo Road','Kurna','Dala','Kofar Mata'],
+    fares:{keke:150,danfo:200,okada:250,taxi:800,uber:1200},
+    alerts:['🕌 Heavy traffic after Friday Jumat prayers 1–3pm','🛺 Keke fares increased 20% this week'],
+  },
+  Ibadan: {
+    emoji:'🌄',
+    areas:['Bodija','Agodi','Mokola','Ring Road','Iwo Road','Challenge','Dugbe','Ojoo','Sango','Apata','Eleyele','Idi Ishin','Egbeda'],
+    fares:{keke:150,danfo:200,okada:300,taxi:900,uber:1300},
+    alerts:['🏎️ UI road clear — good for travel today'],
+  },
+};
+
+const TRANSPORT_MODES = [
+  {id:'keke',icon:'🛺',name:'Keke NAPEP'},
+  {id:'danfo',icon:'🚌',name:'Danfo / BRT'},
+  {id:'okada',icon:'🏍️',name:'Okada'},
+  {id:'taxi',icon:'🚕',name:'Yellow Cab'},
+  {id:'uber',icon:'📱',name:'Uber / Bolt'},
+];
+
+const TIME_SLOTS = [
+  'Early Morning (5–7am)','Morning Rush (7–9am)','Mid Morning (9–11am)',
+  'Afternoon (12–3pm)','Evening Rush (4–7pm)','Night (7pm+)'
+];
+
+const DURATION_OPTIONS = [
+  {id:'under15',icon:'⚡',label:'Under 15 min',mins:10},
+  {id:'15to30',icon:'🚶',label:'15–30 min',mins:22},
+  {id:'30to60',icon:'🕐',label:'30 min–1 hr',mins:45},
+  {id:'1to2hrs',icon:'😐',label:'1–2 hours',mins:90},
+  {id:'2to3hrs',icon:'😩',label:'2–3 hours',mins:150},
+  {id:'over3hrs',icon:'💀',label:'Over 3 hrs',mins:210},
+];
+
+const PIDGIN_MSGS = {
+  low:['Road dey clear! Zoom go, no waste time! 😎','E be like say Lagosians don sleep — road free!','Today na your day. Road is clear like Sunday morning!'],
+  medium:['E dey move small small. Patience na key! 🙏','Some hold-up dey but e no too bad. Manage am.','Traffic dey o, but you go reach. Just drive careful.'],
+  high:['Omo! Road don choke — find another route abeg! 😩','E be like say everybody carry their wahala come road.','This go-slow go chop your time. Better sit down first.'],
+  severe:['GBEGE! Road don die. Stay where you are! 💀','Na only prayer go save you. Oya pray fast!','If you enter now, we go see you tomorrow. E no move!'],
+};
+
+const LEVEL_STYLES = {
+  low:{color:'#22C55E',bg:'rgba(34,197,94,0.12)',label:'FREE FLOW'},
+  medium:{color:'#F59E0B',bg:'rgba(245,158,11,0.12)',label:'MOVING'},
+  high:{color:'#F97316',bg:'rgba(249,115,22,0.12)',label:'HEAVY'},
+  severe:{color:'#EF4444',bg:'rgba(239,68,68,0.12)',label:'GRIDLOCK'},
+};
+
+const PIDGIN_THANKS = [
+  'E don do! You don help your fellow Nigerians! 🙌',
+  'Omo! Thank you die! This info go save people money!',
+  'You be real Naija hero! The people appreciate you! 🇳🇬',
+  'God go bless you! This info dey very useful!',
+  'Na you dey lead! Thank you for the update! 🔥',
+];
+
+const LEADERBOARD_DATA = [
+  {rank:1,from:'Lekki',to:'Lagos Island',city:'Lagos',fare:3500,mode:'uber',icon:'📱',trend:'up',change:'+12%'},
+  {rank:2,from:'Kubwa',to:'Maitama',city:'Abuja',fare:2800,mode:'taxi',icon:'🚕',trend:'same',change:'0%'},
+  {rank:3,from:'Ikorodu',to:'CMS',city:'Lagos',fare:2500,mode:'uber',icon:'📱',trend:'up',change:'+8%'},
+  {rank:4,from:'Trans Amadi',to:'GRA Phase 2',city:'Port Harcourt',fare:2200,mode:'taxi',icon:'🚕',trend:'down',change:'-5%'},
+  {rank:5,from:'Gwarinpa',to:'Central Area',city:'Abuja',fare:2000,mode:'uber',icon:'📱',trend:'up',change:'+15%'},
+  {rank:6,from:'Ajah',to:'Victoria Island',city:'Lagos',fare:1800,mode:'uber',icon:'📱',trend:'up',change:'+20%'},
+  {rank:7,from:'Apapa',to:'Ikeja',city:'Lagos',fare:1500,mode:'taxi',icon:'🚕',trend:'same',change:'0%'},
+  {rank:8,from:'Nyanya',to:'Garki',city:'Abuja',fare:1200,mode:'danfo',icon:'🚌',trend:'down',change:'-3%'},
+  {rank:9,from:'Rumuokoro',to:'Mile 1',city:'Port Harcourt',fare:800,mode:'keke',icon:'🛺',trend:'up',change:'+10%'},
+  {rank:10,from:'Surulere',to:'Yaba',city:'Lagos',fare:250,mode:'keke',icon:'🛺',trend:'same',change:'0%'},
+];
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let currentPage = 'home';
+let trafficCity = 'Lagos';
+let trafficResult = null;
+let trafficActiveTab = 'fares';
+
+// Chat
+const SYSTEM_PROMPT = `You are "Conductor AI" — a witty, street-smart Nigerian transport fare assistant and trainer. You speak a mix of Nigerian Pidgin and English. You have THREE modes:
+
+## MODE 1: FARE ASSISTANT
+When users ask about transport costs between places in Nigeria:
+- Give detailed fare estimates in Naira (₦) for: Keke NAPEP, Danfo/BRT, Okada, Taxi, Uber/Bolt
+- Mention if fares vary by time of day (peak hours cost more)
+- Add Pidgin commentary
+- Include practical tips (haggling advice, surge pricing warnings)
+- Format fares clearly with ₦ symbol
+- Use **bold** for key info
+
+## MODE 2: TRAINER/QUIZ MODE
+When users want to be quizzed:
+- Ask questions like: "How much is keke from Ikeja to Maryland right now?"
+- After they answer, tell them if correct and give the right answer with **bold**
+- Track score mentally and give encouraging Pidgin feedback
+- After 5 questions, give a fun score report
+
+## MODE 3: PRICE UPDATE
+When users say "I want to report a price":
+- Thank them warmly in Pidgin
+- Ask: From where? To where? Which transport? How much? What time?
+- Acknowledge their contribution
+
+## PERSONALITY:
+- Warm, funny, use Nigerian expressions
+- Use emojis naturally 🚌🛺🏍️💰🇳🇬
+- End with a follow-up question
+- Keep responses concise but helpful
+
+Start by briefly introducing yourself and asking what the user needs.`;
+
+let chatHistory = [];
+let chatMode = 'assistant';
+let quizScore = {correct:0,total:0};
+let chatInitialized = false;
+
+// Report
+let rStep = 0;
+const R_TOTAL = 9;
+let rData = {};
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  currentPage = id;
+  window.scrollTo(0,0);
+
+  if (id==='traffic') initTrafficPage();
+  if (id==='chat' && !chatInitialized) initChat();
+  if (id==='report') renderReport();
+  if (id==='leaderboard') renderLeaderboard('all');
+}
+
+// ════════════════════════════════════════
+// TRAFFIC PAGE
+// ════════════════════════════════════════
+function initTrafficPage() {
+  renderTrafficAlerts();
+  updateCheckBtn();
+}
+
+function selectTrafficCity(city, btn) {
+  trafficCity = city;
+  document.querySelectorAll('.city-pill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tFrom').value='';
+  document.getElementById('tTo').value='';
+  document.getElementById('trafficResult').innerHTML='';
+  document.getElementById('trafficTabs').style.display='none';
+  trafficResult = null;
+  renderTrafficAlerts();
+  updateCheckBtn();
+}
+
+function renderTrafficAlerts() {
+  const alerts = CITIES_DATA[trafficCity]?.alerts || [];
+  document.getElementById('trafficAlerts').innerHTML = alerts.map(a=>`
+    <div class="alert-strip mb8">⚡ <span>${a}</span></div>
+  `).join('');
+}
+
+function updateCheckBtn() {
+  const f = document.getElementById('tFrom').value.trim();
+  const t = document.getElementById('tTo').value.trim();
+  document.getElementById('checkBtn').disabled = !f || !t;
+}
+
+function handleTFrom(val) {
+  updateCheckBtn();
+  showSugg('tFromSugg', val, 'tFrom');
+}
+function handleTTo(val) {
+  updateCheckBtn();
+  showSugg('tToSugg', val, 'tTo');
+}
+
+function showSugg(boxId, val, inputId) {
+  const areas = CITIES_DATA[trafficCity]?.areas || [];
+  const box = document.getElementById(boxId);
+  if (val.length < 2) { box.style.display='none'; return; }
+  const matches = areas.filter(a=>a.toLowerCase().includes(val.toLowerCase())).slice(0,5);
+  if (!matches.length) { box.style.display='none'; return; }
+  box.style.display='block';
+  box.innerHTML = matches.map(m=>`
+    <div class="sugg-item" onclick="pickSugg('${inputId}','${boxId}','${m}')">
+      <span>${inputId.includes('From')?'📍':'🎯'}</span>${m}
+    </div>
+  `).join('');
+}
+
+function pickSugg(inputId, boxId, val) {
+  document.getElementById(inputId).value = val;
+  document.getElementById(boxId).style.display = 'none';
+  updateCheckBtn();
+}
+
+function swapTrafficInputs() {
+  const f = document.getElementById('tFrom');
+  const t = document.getElementById('tTo');
+  [f.value, t.value] = [t.value, f.value];
+  updateCheckBtn();
+}
+
+function getTrafficLevel() {
+  const h = new Date().getHours();
+  const d = new Date().getDay();
+  const weekend = d===0||d===6;
+  if (weekend) return h>=10&&h<=14?'medium':'low';
+  if (h>=7&&h<=9||h>=16&&h<=19) return 'severe';
+  if (h>=10&&h<=15) return 'medium';
+  if (h>=20||h<6) return 'low';
+  return 'medium';
+}
+
+function checkTraffic() {
+  const from = document.getElementById('tFrom').value.trim();
+  const to = document.getElementById('tTo').value.trim();
+  if (!from||!to) return;
+
+  document.getElementById('checkBtn').textContent = '⏳ Consulting Oracle...';
+  document.getElementById('checkBtn').disabled = true;
+
+  setTimeout(()=>{
+    const level = getTrafficLevel();
+    const dist = Math.floor(Math.random()*22)+4;
+    const speeds = {low:42,medium:22,high:13,severe:6};
+    const duration = Math.round((dist/speeds[level])*60);
+    const rates = CITIES_DATA[trafficCity].fares;
+    const fares = {
+      keke: Math.round(rates.keke*(dist/5)),
+      danfo: Math.round(rates.danfo*(dist/8)),
+      okada: Math.round(rates.okada*(dist/5)),
+      taxi: Math.round(rates.taxi*(dist/10)),
+      uber: Math.round(rates.uber*(dist/10)),
+    };
+    const msgs = PIDGIN_MSGS[level];
+    const pidgin = msgs[Math.floor(Math.random()*msgs.length)];
+    const style = LEVEL_STYLES[level];
+
+    trafficResult = {level,dist,duration,fares,pidgin,from,to,style};
+
+    document.getElementById('checkBtn').textContent = '🔮 Check Road';
+    document.getElementById('checkBtn').disabled = false;
+
+    renderTrafficResult();
+    document.getElementById('trafficTabs').style.display='block';
+    switchTrafficTab('fares');
+  }, 1600);
+}
+
+function renderTrafficResult() {
+  const r = trafficResult;
+  if (!r) return;
+  document.getElementById('trafficResult').innerHTML = `
+    <div class="result-card" style="border-color:${r.style.color};background:${r.style.bg}">
+      <div class="result-header">
+        <div>
+          <div class="result-badge" style="background:${r.style.color};color:#080B0F">${r.style.label}</div>
+          <div style="font-size:12px;color:var(--ink3);margin-top:6px">${r.from} → ${r.to}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="result-eta" style="color:${r.style.color}">${r.duration}<span style="font-size:14px"> min</span></div>
+          <div class="result-dist">${r.dist} km</div>
+        </div>
+      </div>
+      <div class="pidgin-box" style="border-color:${r.style.color}">
+        💬 ${r.pidgin}
+      </div>
+    </div>
+  `;
+}
+
+function switchTrafficTab(tab) {
+  trafficActiveTab = tab;
+  ['fares','tips','alternate'].forEach(t=>{
+    document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1))?.classList.toggle('active',t===tab);
+  });
+  const r = trafficResult;
+  if (!r) return;
+
+  if (tab==='fares') {
+    document.getElementById('trafficTabContent').innerHTML = `
+      <div class="fare-grid">
+        ${TRANSPORT_MODES.map(m=>`
+          <div class="fare-item">
+            <div class="fare-icon">${m.icon}</div>
+            <div>
+              <div class="fare-name">${m.name}</div>
+              <div class="fare-price">₦${(r.fares[m.id]||0).toLocaleString()}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="font-size:11px;color:var(--ink3);margin-top:10px;text-align:center">
+        * Estimates vary by negotiation, surge & driver mood 😅
+      </div>
+    `;
+  } else if (tab==='tips') {
+    const tips = [
+      r.level==='severe' && '🚨 Avoid this route now if possible — gridlock detected.',
+      r.level==='high' && '⚠️ Leave early or wait 1–2 hours for traffic to ease.',
+      r.duration>45 && '🎵 Download a playlist before entering this road.',
+      r.dist>15 && '💧 Carry water — this go take time.',
+      r.level==='low' && '🏎️ Road is free! Best window to move right now.',
+      '📱 Share your live location with family before traveling.',
+      trafficCity==='Lagos' && '🌧️ If rain fall, multiply travel time by 3x.',
+      trafficCity==='Lagos' && '🚔 Watch for LASTMA at key junctions.',
+      trafficCity==='Abuja' && '🚦 Abuja roundabouts can be tricky at peak hours.',
+      trafficCity==='Kano' && '🕌 Expect traffic after Friday Jumat prayers.',
+      '🚌 BRT is usually fastest during heavy go-slow.',
+    ].filter(Boolean);
+    document.getElementById('trafficTabContent').innerHTML = tips.map(t=>`<div class="tip-item">${t}</div>`).join('');
+  } else {
+    const alts = [
+      {route:'Express Way', time: Math.round(r.duration*0.75)+'min', note:'Faster but toll applies'},
+      {route:'Back Road via '+((CITIES_DATA[trafficCity]?.areas||[])[Math.floor(Math.random()*8)]), time: Math.round(r.duration*1.1)+'min', note:'Longer but less traffic'},
+      {route:'Public transport combo', time: Math.round(r.duration*0.9)+'min', note:'Mix of BRT + Keke'},
+    ];
+    document.getElementById('trafficTabContent').innerHTML = alts.map(a=>`
+      <div class="tip-item" style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:600;color:var(--ink);margin-bottom:2px">${a.route}</div>
+          <div style="font-size:11px;color:var(--ink3)">${a.note}</div>
+        </div>
+        <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:var(--amber)">${a.time}</div>
+      </div>
+    `).join('');
+  }
+}
+
+// ════════════════════════════════════════
+// CHAT
+// ════════════════════════════════════════
+function initChat() {
+  chatInitialized = true;
+  addAiMsg(`Ẹ káàbọ̀! 🇳🇬 Na me be **Conductor AI** — your personal Naija transport oracle!\n\nI fit help you with:\n🚌 **Fare prices** from any location\n🎯 **Quiz you** on Nigerian fares\n📍 **Collect updated prices** from your experience\n\nI dey search the internet for fresh prices — no old data here!\n\nSo wetin you wan know today? Where you dey go? 🤔`);
+}
+
+function setChatMode(mode) {
+  chatMode = mode;
+  ['assistant','quiz','report'].forEach(m=>{
+    const p = document.getElementById('pill'+m.charAt(0).toUpperCase()+m.slice(1));
+    if(p) p.className = 'mode-pill' + (m===mode?' active-'+mode:'');
+  });
+  if (mode==='quiz') {
+    document.getElementById('quizScoreBadge').style.display='flex';
+    sendChat('Quiz me on Nigerian transport fares!');
+  } else if (mode==='report') {
+    sendChat('I want to report a transport fare I just paid.');
+  }
+  document.getElementById('quizScoreBadge').style.display = mode==='quiz'?'flex':'none';
+}
+
+function addAiMsg(text) {
+  const now = new Date().toLocaleTimeString('en-NG',{hour:'2-digit',minute:'2-digit'});
+  const el = document.createElement('div');
+  el.className = 'msg-row';
+  el.innerHTML = `
+    <div class="msg-avatar">🚌</div>
+    <div>
+      <div class="msg-bubble ai">${formatMsg(text)}</div>
+      <div class="msg-time">${now}</div>
+    </div>
+  `;
+  document.getElementById('chatMessages').appendChild(el);
+  scrollChat();
+}
+
+function addUserMsg(text) {
+  const now = new Date().toLocaleTimeString('en-NG',{hour:'2-digit',minute:'2-digit'});
+  const el = document.createElement('div');
+  el.className = 'msg-row user';
+  el.innerHTML = `
+    <div class="msg-avatar">🧑</div>
+    <div>
+      <div class="msg-bubble user">${text}</div>
+      <div class="msg-time" style="text-align:right">${now}</div>
+    </div>
+  `;
+  document.getElementById('chatMessages').appendChild(el);
+  scrollChat();
+}
+
+function showTyping() {
+  const el = document.createElement('div');
+  el.className = 'msg-row';el.id='typingIndicator';
+  el.innerHTML = `
+    <div class="msg-avatar">🚌</div>
+    <div class="msg-bubble ai">
+      <div class="typing-indicator">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+      <div style="font-size:10px;color:var(--ink3);margin-top:4px">searching live prices...</div>
+    </div>
+  `;
+  document.getElementById('chatMessages').appendChild(el);
+  scrollChat();
+}
+
+function hideTyping() {
+  document.getElementById('typingIndicator')?.remove();
+}
+
+function scrollChat() {
+  const el = document.getElementById('chatMessages');
+  el.scrollTop = el.scrollHeight;
+}
+
+function formatMsg(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g,'<strong style="color:var(--amber)">$1</strong>')
+    .replace(/\n/g,'<br/>');
+}
+
+async function sendChat(text) {
+  const inp = document.getElementById('chatInput');
+  const msg = text || inp.value.trim();
+  if (!msg || document.getElementById('sendBtn').disabled) return;
+
+  if (!text) { inp.value=''; inp.style.height='auto'; }
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('agentStatus').textContent = '🟡 Thinking...';
+
+  // Hide quick prompts after first use
+  document.getElementById('quickPrompts').style.display = 'none';
+
+  addUserMsg(msg);
+  chatHistory.push({role:'user',content:msg});
+
+  // Detect mode from message
+  const lower = msg.toLowerCase();
+  if (lower.includes('quiz')||lower.includes('test me')||lower.includes('train me')) chatMode='quiz';
+  else if (lower.includes('report')||lower.includes('update price')) chatMode='report';
+
+  showTyping();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:SYSTEM_PROMPT,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:chatHistory
+      })
+    });
+    const data = await res.json();
+    let reply = '';
+    if (data.content) {
+      for (const b of data.content) { if (b.type==='text') reply+=b.text; }
+    }
+    if (!reply) reply = 'Omo! Network wahala catch me. Try again abeg 😅';
+
+    // Update quiz score
+    if (chatMode==='quiz') {
+      const l = reply.toLowerCase();
+      if (l.includes('correct')||l.includes('right answer')) { quizScore.correct++; quizScore.total++; }
+      else if (l.includes('wrong')||l.includes('incorrect')||l.includes('no,')) { quizScore.total++; }
+      document.getElementById('quizScoreBadge').textContent = `✅ ${quizScore.correct}/${quizScore.total}`;
+    }
+
+    hideTyping();
+    chatHistory.push({role:'assistant',content:reply});
+    addAiMsg(reply);
+  } catch(e) {
+    hideTyping();
+    addAiMsg('E be like network wahala catch me 😅 Check your connection and try again!');
+  }
+
+  document.getElementById('agentStatus').textContent = '🟢 Online · searching live prices';
+  document.getElementById('sendBtn').disabled = false;
+}
+
+// ════════════════════════════════════════
+// REPORT FORM
+// ════════════════════════════════════════
+function renderReport() {
+  updateRProgress();
+  const el = document.getElementById('rContent');
+  const wrap = document.getElementById('rProgressWrap');
+  if (rStep >= R_TOTAL) { wrap.style.display='none'; renderRSuccess(el); return; }
+  wrap.style.display='block';
+
+  if (rStep===0) renderRCity(el);
+  else if(rStep===1) renderRFrom(el);
+  else if(rStep===2) renderRTo(el);
+  else if(rStep===3) renderRTransport(el);
+  else if(rStep===4) renderRFare(el);
+  else if(rStep===5) renderRTime(el);
+  else if(rStep===6) renderRDuration(el);
+  else if(rStep===7) renderRDate(el);
+  else if(rStep===8) renderRSummary(el);
+}
+
+function updateRProgress() {
+  const pct = Math.round((rStep/R_TOTAL)*100);
+  document.getElementById('rProgressFill').style.width=pct+'%';
+  document.getElementById('rStepLabel').textContent = rStep<R_TOTAL?`Step ${rStep+1} of ${R_TOTAL}`:'Complete!';
+  document.getElementById('rPctLabel').textContent=pct+'%';
+  const dotsEl = document.getElementById('rStepDots');
+  dotsEl.innerHTML='';
+  for(let i=0;i<R_TOTAL;i++){
+    const d=document.createElement('div');
+    d.className='dot'+(i===rStep?' active':i<rStep?' done':'');
+    dotsEl.appendChild(d);
+  }
+}
+
+function rNext(){rStep++;renderReport();window.scrollTo(0,0)}
+function rBack(){rStep--;renderReport();window.scrollTo(0,0)}
+
+function renderRCity(el) {
+  el.innerHTML=`
+    <div class="info-box">💡 Your report helps thousands of Nigerians get real fare data. Takes only 1 minute!</div>
+    <div class="r-card">
+      <div class="r-step-label">Step 1 of 9 — City</div>
+      <div class="r-question">Which city did you travel in?</div>
+      <div class="r-sub">Select where this journey happened</div>
+      <div class="opt-grid">
+        ${Object.entries(CITIES_DATA).map(([c,d])=>`
+          <button class="opt-btn ${rData.city===c?'sel':''}" onclick="rSelCity('${c}')">
+            <span class="o-icon">${d.emoji}</span><span>${c}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="r-nav">
+        <button class="r-next" onclick="if(rData.city)rNext()" ${!rData.city?'disabled':''}>Continue →</button>
+      </div>
+    </div>
+  `;
+}
+function rSelCity(c){rData.city=c;rData.from='';rData.to='';renderReport()}
+
+function renderRFrom(el) {
+  const areas = CITIES_DATA[rData.city]?.areas||[];
+  el.innerHTML=`
+    <div class="r-card">
+      <div class="r-step-label">Step 2 of 9 — Departure</div>
+      <div class="r-question">Where did your journey start?</div>
+      <div class="r-sub">Type the area or landmark in ${rData.city}</div>
+      <div class="autocomplete-wrap">
+        <input class="r-input" id="rFromInp" placeholder="e.g. ${areas[0]||'Ikeja'}"
+          value="${rData.from||''}" oninput="rHandleFrom(this.value)" autocomplete="off"/>
+        <div class="sugg-box" id="rFromSugg" style="display:none"></div>
+      </div>
+      <div class="r-nav">
+        <button class="r-back" onclick="rBack()">← Back</button>
+        <button class="r-next" id="rFromNext" onclick="if(rData.from)rNext()" ${!rData.from?'disabled':''}>Continue →</button>
+      </div>
+    </div>
+  `;
+  setTimeout(()=>document.getElementById('rFromInp')?.focus(),100);
+}
+function rHandleFrom(v){
+  rData.from=v;
+  document.getElementById('rFromNext').disabled=!v;
+  const m=( CITIES_DATA[rData.city]?.areas||[]).filter(a=>a.toLowerCase().includes(v.toLowerCase())).slice(0,5);
+  const b=document.getElementById('rFromSugg');
+  if(m.length&&v.length>=2){b.style.display='block';b.innerHTML=m.map(s=>`<div class="sugg-item" onclick="rPickFrom('${s}')">📍 ${s}</div>`).join('')}
+  else b.style.display='none';
+}
+function rPickFrom(s){rData.from=s;document.getElementById('rFromInp').value=s;document.getElementById('rFromSugg').style.display='none';document.getElementById('rFromNext').disabled=false}
+
+function renderRTo(el) {
+  const areas=CITIES_DATA[rData.city]?.areas||[];
+  el.innerHTML=`
+    <div class="r-card">
+      <div class="r-step-label">Step 3 of 9 — Destination</div>
+      <div class="r-question">Where did your journey end?</div>
+      <div class="r-sub">From <strong class="hi">${rData.from}</strong> to...</div>
+      <div class="autocomplete-wrap">
+        <input class="r-input" id="rToInp" placeholder="e.g. ${areas[4]||'Victoria Island'}"
+          value="${rData.to||''}" oninput="rHandleTo(this.value)" autocomplete="off"/>
+        <div class="sugg-box" id="rToSugg" style="display:none"></div>
+      </div>
+      <div class="r-nav">
+        <button class="r-back" onclick="rBack()">← Back</button>
+        <button class="r-next" id="rToNext" onclick="if(rData.to)rNext()" ${!rData.to?'disabled':''}>Continue →</button>
+      </div>
+    </div>
+  `;
+  setTimeout(()=>document.getElementById('rToInp')?.focus(),100);
+}
+function rHandleTo(v){
+  rData.to=v;
+  document.getElementById('rToNext').disabled=!v;
+  const m=(CITIES_DATA[rData.city]?.areas||[]).filter(a=>a.toLowerCase().includes(v.toLowerCase())).slice(0,5);
+  const b=document.getElementById('rToSugg');
+  if(m.length&&v.length>=2){b.style.display='block';b.innerHTML=m.map(s=>`<div class="sugg-item" onclick="rPickTo('${s}')">🎯 ${s}</div>`).join('')}
+  else b.style.display='none';
+}
+function rPickTo(s){rData.to=s;document.getElementById('rToInp').value=s;document.getElementById('rToSugg').style.display='none';document.getElementById('rToNext').disabled=false}
+
+function renderRTransport(el) {
+  el.innerHTML=`
+    <div class="r-card">
+      <div class="r-step-label">Step 4 of 9 — Transport</div>
+      <div class="r-question">Which transport did you use?</div>
+      <div class="r-sub">Select the vehicle type you boarded</div>
+      <div class="opt-grid three">
+        ${TRANSPORT_MODES.map(m=>`
+          <button class="opt-btn ${rData.transport===m.id?'sel':''}" onclick="rSelTransport('${m.id}')">
+            <span class="o-icon">${m.icon}</span><span>${m.name}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="r-nav">
+        <button class="r-back" onclick="rBack()">← Back</button>
+        <button class="r-next" onclick="if(rData.transport)rNext()" ${!rData.transport?'disabled':''}>Continue →</button>
+      </div>
+    </div>
+  `;
+}
+function rSelTransport(t){rData.transport=t;renderReport()}
+
+function renderRFare(el) {
+  const tm=TRANSPORT_MODES.find(m=>m.id===rData.transport);
+  el.innerHTML=`
+    <div class="r-card">
+      <div class="r-step-label">Step 5 of 9 — Fare</div>
+      <div class="r-question">How much did you pay?</div>
+      <div class="r-sub">${tm?.icon} ${tm?.name} · ${rData.from} → ${rData.to}</div>
+      <div class="fare-wrap">
+        <span class="fare-sym">₦</span>
+        <input class="r-input fare-big" id="rFareInp" type="number" placeholder="0"
+          value="${rData.fare||''}"
+          oninput="rData.fare=this.value;document.getElementById('rFareNext').disabled=!this.value" min="0"/>
+      </div>
+      <div class="chips-wrap">
+        ${['150','200','300','500','800','1000','1500','2000','3000','5000'].map(v=>`
+          <button class="r-chip ${rData.fare==v?'sel':''}" onclick="rSetFare('${v}')">₦${parseInt(v).toLocaleString()}</button>
+        `).join('')}
+      </div>
+      <div class="r-nav">
+        <button class="r-back" onclick="rBack()">← Back</button>
+        <button class="r-next" id="rFareNext" onclick="if(rData.fare)rNext()" ${!rData.fare?'disabled':''}>Continue →</button>
+      </div>
+    </div>
+  `;
+  setTimeout(()=>document.getElementById('rFareInp')?.focus(),100);
+}
+function rSetFare(v){
+  rData.fare=v;
+  document.getElementById('rFareInp').value=v;
+  document.getElementById('rFareNext').disabled=false;
+  document.querySelectorAll('.r-chip').forEach(c=>c.classList.toggle('sel',c.textContent.replace(/[₦,]/g,'').trim()===parseInt(v).toLocaleString()));
+}
+
+function renderRTime(el) {
+  el.innerHTML=`
+    <div class="r-card">
+      <div class="r-step-label">Step 6 of 9 — Time of Day</div>
+      <div class="r-question">When did you travel?</div>
+      <div class="r-sub">Time affects fares — rush hours cost more!</div>
+      <div class="opt-grid single">
+        ${TIME_SLOTS.map(t=>`
+          <button class="opt-btn" style="flex-direction:row;justify-content:flex-start;gap:10px;padding:12px 14px;${rData.time===t?'border-color:var(--amber);background:var(--amber-glow);color:var(--amber)':''}"
+            onclick="rSelTime('${t}')">
+            <span>${t}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div style="margin-top:14px">
+        <div style="font-size:11px;color:var(--ink3);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Note (optional)</div>
+        <textarea class="r-input" rows="2" placeholder="e.g. 'Driver added ₦50 for luggage' or 'Surge because of rain'"
+          oninput="rData.note=this.value" style="resize:none">${rData.note||''}</textarea>
+      </div>
+      <div class="r-nav">
+        <button class="r-back" onclick="rBack()">← Back</button>
+        <button class="r-next" onclick="if(rData.time)rNext()" ${!rData.time?'disabled':''}>Continue →</button>
+      </div>
+    </div>
+  `;
+}
+function rSelTime(t){rData.time=t;renderReport()}
+
+function renderRDuration(el) {
+  el.innerHTML=`
+    <div class="r-card">
+      <div class="r-step-label">Step 7 of 9 — Journey Duration</div>
+      <div class="r-question">How long did the trip take?</div>
+      <div class="r-sub">From <strong class="hi">${rData.from}</strong> to <strong class="hi">${rData.to}</strong> — including all waiting</div>
+      <div class="opt-grid">
+        ${DURATION_OPTIONS.map(d=>`
+          <button class="opt-btn ${rData.duration===d.id?'sel':''}" onclick="rSelDuration('${d.id}','${d.label}',${d.mins})">
+            <span class="o-icon">${d.icon}</span><span>${d.label}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="info-box mt16">🚦 Journey duration helps us build real traffic congestion data for this route!</div>
+      <div class="r-nav">
+        <button class="r-back" onclick="rBack()">← Back</button>
+        <button class="r-next" onclick="if(rData.duration)rNext()" ${!rData.duration?'disabled':''}>Continue →</button>
+      </div>
+    </div>
+  `;
+}
+function rSelDuration(id,label,mins){rData.duration=id;rData.durationLabel=label;rData.durationMins=mins;renderReport()}
+
+function renderRDate(el) {
+  const today=new Date();
+  const todayStr=today.toISOString().split('T')[0];
+  const quickDates=[];
+  for(let i=0;i<7;i++){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const v=d.toISOString().split('T')[0];
+    const lb=i===0?'Today':i===1?'Yesterday':d.toLocaleDateString('en-NG',{weekday:'short',day:'numeric',month:'short'});
+    quickDates.push({v,lb});
+  }
+  if(!rData.travelDate){rData.travelDate=todayStr;rData.travelDateLabel='Today'}
+  el.innerHTML=`
+    <div class="r-card">
+      <div class="r-step-label">Step 8 of 9 — Travel Date</div>
+      <div class="r-question">When did this journey happen?</div>
+      <div class="r-sub">Helps us track how fares change over time</div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;color:var(--ink3);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Quick Select</div>
+        <div class="chips-wrap">
+          ${quickDates.map(d=>`
+            <button class="r-chip ${rData.travelDate===d.v?'sel':''}" onclick="rSelDate('${d.v}','${d.lb}')">${d.lb}</button>
+          `).join('')}
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--ink3);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Or pick a date</div>
+      <input type="date" class="r-input" id="rDateInp" value="${rData.travelDate||todayStr}"
+        max="${todayStr}" oninput="rSelDate(this.value,'')" style="font-size:15px"/>
+      <div class="info-box mt16">📊 Date data helps detect seasonal patterns — festive spikes, fuel scarcity surges!</div>
+      <div class="r-nav">
+        <button class="r-back" onclick="rBack()">← Back</button>
+        <button class="r-next" onclick="if(rData.travelDate)rNext()" ${!rData.travelDate?'disabled':''}>Review →</button>
+      </div>
+    </div>
+  `;
+}
+function rSelDate(v,lb){
+  rData.travelDate=v;
+  rData.travelDateLabel=lb||new Date(v+'T12:00:00').toLocaleDateString('en-NG',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.querySelectorAll('#rContent .r-chip').forEach(c=>c.classList.toggle('sel',c.textContent===lb||(lb===''&&c.textContent==='Today'&&v===new Date().toISOString().split('T')[0])));
+  const di=document.getElementById('rDateInp');if(di&&di.value!==v)di.value=v;
+}
+
+function renderRSummary(el) {
+  const tm=TRANSPORT_MODES.find(m=>m.id===rData.transport);
+  const fd=rData.travelDate?new Date(rData.travelDate+'T12:00:00').toLocaleDateString('en-NG',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'—';
+  el.innerHTML=`
+    <div class="info-box">✅ Almost done! Review and confirm your fare report.</div>
+    <div class="r-card">
+      <div class="r-step-label">Step 9 of 9 — Confirm</div>
+      <div class="r-question">Your Fare Report</div>
+      <div style="margin-top:16px">
+        ${[
+          ['City',`🏙️ ${rData.city}`],
+          ['Route',`${rData.from} → ${rData.to}`],
+          ['Transport',`${tm?.icon} ${tm?.name}`],
+          ['Fare Paid',null],
+          ['Time of Day',`🕐 ${rData.time}`],
+          ['Duration',`⏱️ ${rData.durationLabel||'—'}`],
+          ['Travel Date',`📅 ${fd}`],
+          ...(rData.note?[['Note',rData.note]]:[]),
+        ].map(([l,v])=>l==='Fare Paid'?`
+          <div class="sum-row">
+            <span class="sum-label">${l}</span>
+            <span class="sum-fare">₦${parseInt(rData.fare).toLocaleString()}</span>
+          </div>
+        `:`
+          <div class="sum-row">
+            <span class="sum-label">${l}</span>
+            <span class="sum-value">${v}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="r-nav">
+        <button class="r-back" onclick="rBack()">← Edit</button>
+        <button class="r-next" onclick="rSubmit()">🚀 Submit Report</button>
+      </div>
+    </div>
+  `;
+}
+
+function rSubmit() {
+  const payload={...rData,submittedAt:new Date().toISOString()};
+  console.log('📍 Fare Report:', payload);
+  // Increment stats
+  document.getElementById('statReports').textContent=(parseInt(document.getElementById('statReports').textContent.replace(',',''))+1).toLocaleString();
+  rStep=R_TOTAL;
+  renderReport();
+}
+
+function renderRSuccess(el) {
+  const pidgin=PIDGIN_THANKS[Math.floor(Math.random()*PIDGIN_THANKS.length)];
+  const tm=TRANSPORT_MODES.find(m=>m.id===rData.transport);
+  const shareText=`I just reported a fare on Conductor AI! ${tm?.icon} ${tm?.name} from ${rData.from} to ${rData.to} in ${rData.city} costs ₦${parseInt(rData.fare).toLocaleString()} and took ${rData.durationLabel} on ${rData.travelDateLabel||rData.travelDate}. Help your people — report your fare too!`;
+  el.innerHTML=`
+    <div class="r-card success-wrap">
+      <div class="success-icon">🎉</div>
+      <div class="success-title">Report Received!</div>
+      <p class="success-msg">Your data helps Nigerians across ${rData.city} get accurate transport costs.</p>
+      <div class="pidgin-badge">${pidgin}</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;text-align:left">
+        <div style="font-size:11px;color:var(--ink3);font-weight:600;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">Your Contribution</div>
+        <div style="font-size:15px;font-weight:600;color:var(--ink)">${tm?.icon} ${tm?.name}</div>
+        <div style="font-size:13px;color:var(--ink3);margin:2px 0">${rData.from} → ${rData.to}, ${rData.city}</div>
+        <div style="font-family:'Unbounded',sans-serif;font-size:26px;font-weight:900;color:var(--amber);margin-top:6px">₦${parseInt(rData.fare).toLocaleString()}</div>
+        <div style="font-size:12px;color:var(--ink3);margin-top:4px">⏱️ ${rData.durationLabel} · 📅 ${rData.travelDateLabel||rData.travelDate}</div>
+      </div>
+      <button class="whatsapp-btn" onclick="window.open('https://wa.me/?text=${encodeURIComponent(shareText)}','_blank')">📲 Share on WhatsApp</button>
+      <button class="restart-btn" onclick="rData={};rStep=0;renderReport()">＋ Report Another Fare</button>
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════
+// LEADERBOARD
+// ════════════════════════════════════════
+function renderLeaderboard(filter) {
+  const data = filter==='all'?LEADERBOARD_DATA:LEADERBOARD_DATA.filter(r=>r.city===filter||(filter==='PH'&&r.city==='Port Harcourt'));
+  document.getElementById('lbContent').innerHTML = `
+    <div style="font-size:11px;color:var(--ink3);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px">Most Expensive Routes</div>
+    ${data.map((r,i)=>`
+      <div class="lb-route-card">
+        <div class="lb-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+r.rank}</div>
+        <div class="lb-transport-icon">${r.icon}</div>
+        <div class="lb-route-info">
+          <div class="lb-route-name">${r.from} → ${r.to}</div>
+          <div class="lb-route-meta">${r.city} · ${TRANSPORT_MODES.find(m=>m.id===r.mode)?.name}</div>
+        </div>
+        <div class="lb-fare">
+          <div class="lb-fare-amt">₦${r.fare.toLocaleString()}</div>
+          <div class="lb-fare-mode ${r.trend==='up'?'trend-up':r.trend==='down'?'trend-down':'trend-same'}">
+            ${r.trend==='up'?'↑':r.trend==='down'?'↓':'→'} ${r.change}
+          </div>
+        </div>
+      </div>
+    `).join('')}
+    <div style="margin-top:24px;font-size:11px;color:var(--ink3);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px">Best Value Routes 💚</div>
+    ${[
+      {from:'Surulere',to:'Yaba',city:'Lagos',fare:250,mode:'keke',icon:'🛺'},
+      {from:'Wuse',to:'Area 1',city:'Abuja',fare:300,mode:'keke',icon:'🛺'},
+      {from:'Mile 1',to:'Rumuola',city:'Port Harcourt',fare:200,mode:'danfo',icon:'🚌'},
+      {from:'Bodija',to:'Ring Road',city:'Ibadan',fare:150,mode:'keke',icon:'🛺'},
+    ].map(r=>`
+      <div class="lb-route-card">
+        <div class="lb-transport-icon">${r.icon}</div>
+        <div class="lb-route-info">
+          <div class="lb-route-name">${r.from} → ${r.to}</div>
+          <div class="lb-route-meta">${r.city} · ${TRANSPORT_MODES.find(m=>m.id===r.mode)?.name}</div>
+        </div>
+        <div class="lb-fare">
+          <div class="lb-fare-amt" style="color:var(--green)">₦${r.fare.toLocaleString()}</div>
+          <div class="lb-fare-mode trend-down">↓ Best value</div>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+
+function filterLB(filter, btn) {
+  document.querySelectorAll('.lb-filter').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLeaderboard(filter);
+}
+
+
+// ════════════════════════════════════════
+// TOAST SYSTEM
+// ════════════════════════════════════════
+function showToast(msg, type='info', duration=3000) {
+  const colors = {info:'var(--surface3)',success:'rgba(34,197,94,.2)',warn:'rgba(245,166,35,.2)',error:'rgba(239,68,68,.2)'};
+  const borders = {info:'var(--border2)',success:'rgba(34,197,94,.4)',warn:'rgba(245,166,35,.4)',error:'rgba(239,68,68,.4)'};
+  const icons = {info:'ℹ️',success:'✅',warn:'⚠️',error:'❌'};
+  const el = document.createElement('div');
+  el.style.cssText = `padding:12px 18px;background:${colors[type]};border:1px solid ${borders[type]};border-radius:10px;font-size:13px;color:var(--ink);display:flex;align-items:center;gap:8px;pointer-events:auto;animation:slideUp .3s ease;backdrop-filter:blur(20px);box-shadow:0 8px 32px rgba(0,0,0,.4);max-width:320px;`;
+  el.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),300); }, duration);
+}
+
+// ════════════════════════════════════════
+// THEME TOGGLE
+// ════════════════════════════════════════
+let isDark = true;
+function toggleTheme() {
+  isDark = !isDark;
+  const r = document.documentElement.style;
+  const btn = document.getElementById('themeBtn');
+  if (!isDark) {
+    r.setProperty('--bg','#F5F0E8');
+    r.setProperty('--surface','#FFFFFF');
+    r.setProperty('--surface2','#F0EBE0');
+    r.setProperty('--surface3','#E8E0D0');
+    r.setProperty('--border','#DDD5C8');
+    r.setProperty('--border2','#CCC4B4');
+    r.setProperty('--ink','#1A1208');
+    r.setProperty('--ink2','#4A4038');
+    r.setProperty('--ink3','#8A7860');
+    document.body.style.background='#F5F0E8';
+    btn.textContent='☀️';
+  } else {
+    r.setProperty('--bg','#080B0F');
+    r.setProperty('--surface','#0F1318');
+    r.setProperty('--surface2','#161B22');
+    r.setProperty('--surface3','#1E2530');
+    r.setProperty('--border','#242B36');
+    r.setProperty('--border2','#2E3844');
+    r.setProperty('--ink','#ECE8E0');
+    r.setProperty('--ink2','#A8A098');
+    r.setProperty('--ink3','#686058');
+    document.body.style.background='#080B0F';
+    btn.textContent='🌙';
+  }
+  showToast(isDark?'Dark mode on':'Light mode on','info',1500);
+}
+
+// ════════════════════════════════════════
+// SHOW PAGE - UPDATED to handle new pages
+// ════════════════════════════════════════
+const _origShowPage = showPage;
+// Override showPage to handle new pages
+window.showPage = function(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  const page = document.getElementById('page-'+id);
+  const tab = document.getElementById('tab-'+id);
+  if (!page) return;
+  page.classList.add('active');
+  if (tab) tab.classList.add('active');
+  currentPage = id;
+  window.scrollTo(0,0);
+
+  if (id==='traffic') initTrafficPage();
+  if (id==='chat' && !chatInitialized) initChat();
+  if (id==='report') renderReport();
+  if (id==='leaderboard') renderLeaderboard('all');
+  if (id==='calculator') initCalculator();
+  if (id==='community') initCommunityFeed();
+  if (id==='profile') renderProfile();
+};
+
+// ════════════════════════════════════════
+// FARE CALCULATOR
+// ════════════════════════════════════════
+let calcCity = 'Lagos';
+let calcPassengers = 1;
+let savedRoutes = JSON.parse(localStorage.getItem('savedRoutes')||'[]');
+
+function selectCalcCity(city, btn) {
+  calcCity = city;
+  document.querySelectorAll('#calcCityScroll .city-pill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('cFrom').value='';
+  document.getElementById('cTo').value='';
+  document.getElementById('calcResult').innerHTML='';
+  updateCalcBtn();
+}
+
+function initCalculator() {
+  updateCalcBtn();
+  renderSavedRoutes();
+}
+
+function changePassengers(delta) {
+  calcPassengers = Math.max(1, Math.min(10, calcPassengers + delta));
+  document.getElementById('passengerCount').textContent = calcPassengers;
+  if (document.getElementById('calcResult').innerHTML) runCalculator();
+}
+
+function handleCFrom(val) {
+  updateCalcBtn();
+  const areas = CITIES_DATA[calcCity]?.areas||[];
+  const box = document.getElementById('cFromSugg');
+  const matches = val.length>=2 ? areas.filter(a=>a.toLowerCase().includes(val.toLowerCase())).slice(0,5) : [];
+  box.style.display = matches.length?'block':'none';
+  box.innerHTML = matches.map(m=>`<div class="sugg-item" onclick="pickCalcSugg('cFrom','cFromSugg','${m}')">📍 ${m}</div>`).join('');
+}
+function handleCTo(val) {
+  updateCalcBtn();
+  const areas = CITIES_DATA[calcCity]?.areas||[];
+  const box = document.getElementById('cToSugg');
+  const matches = val.length>=2 ? areas.filter(a=>a.toLowerCase().includes(val.toLowerCase())).slice(0,5) : [];
+  box.style.display = matches.length?'block':'none';
+  box.innerHTML = matches.map(m=>`<div class="sugg-item" onclick="pickCalcSugg('cTo','cToSugg','${m}')">🎯 ${m}</div>`).join('');
+}
+function pickCalcSugg(inp,box,val){document.getElementById(inp).value=val;document.getElementById(box).style.display='none';updateCalcBtn();}
+function swapCalcInputs(){const f=document.getElementById('cFrom');const t=document.getElementById('cTo');[f.value,t.value]=[t.value,f.value];updateCalcBtn();}
+function updateCalcBtn(){document.getElementById('calcBtn').disabled=!document.getElementById('cFrom').value.trim()||!document.getElementById('cTo').value.trim();}
+
+function runCalculator() {
+  const from = document.getElementById('cFrom').value.trim();
+  const to = document.getElementById('cTo').value.trim();
+  if (!from||!to) return;
+  const timeSlot = document.getElementById('calcTimeSlot').value;
+  const isRush = timeSlot.includes('Rush');
+  const dist = Math.floor(Math.random()*20)+4;
+  const rates = CITIES_DATA[calcCity].fares;
+  const surge = isRush ? 1.35 : 1;
+  const modes = [
+    {id:'keke',icon:'🛺',name:'Keke NAPEP',base:Math.round(rates.keke*(dist/5)*surge),time:Math.round(dist/15*60),pros:'Cheap, flexible',cons:'Not for long routes',comfort:2},
+    {id:'danfo',icon:'🚌',name:'Danfo / BRT',base:Math.round(rates.danfo*(dist/8)*surge),time:Math.round(dist/20*60),pros:'Affordable, covers most routes',cons:'Crowded, unpredictable',comfort:2},
+    {id:'okada',icon:'🏍️',name:'Okada',base:Math.round(rates.okada*(dist/5)*surge),time:Math.round(dist/25*60),pros:'Fast through traffic',cons:'Higher risk, banned some areas',comfort:1},
+    {id:'taxi',icon:'🚕',name:'Yellow Cab',base:Math.round(rates.taxi*(dist/10)*surge),time:Math.round(dist/30*60),pros:'Private, comfortable',cons:'Must negotiate price',comfort:4},
+    {id:'uber',icon:'📱',name:'Uber / Bolt',base:Math.round(rates.uber*(dist/10)*surge),time:Math.round(dist/30*60),pros:'Cashless, tracked, safe',cons:'Surge pricing possible',comfort:5},
+  ];
+  const totalModes = modes.map(m=>({...m,total:m.base*calcPassengers}));
+  const cheapest = totalModes.reduce((a,b)=>a.total<b.total?a:b);
+  const fastest = totalModes.reduce((a,b)=>a.time<b.time?a:b);
+
+  document.getElementById('calcResult').innerHTML = `
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <div style="flex:1;min-width:120px;background:var(--green-glow);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:10px;color:var(--green);font-weight:700;letter-spacing:1px;margin-bottom:4px">CHEAPEST</div>
+        <div style="font-size:18px">${cheapest.icon}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--ink)">${cheapest.name}</div>
+        <div style="font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:var(--green)">₦${cheapest.total.toLocaleString()}</div>
+      </div>
+      <div style="flex:1;min-width:120px;background:var(--amber-glow);border:1px solid rgba(245,166,35,.3);border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:10px;color:var(--amber);font-weight:700;letter-spacing:1px;margin-bottom:4px">FASTEST</div>
+        <div style="font-size:18px">${fastest.icon}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--ink)">${fastest.name}</div>
+        <div style="font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:var(--amber)">${fastest.time} min</div>
+      </div>
+      <div style="flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:10px;color:var(--ink3);font-weight:700;letter-spacing:1px;margin-bottom:4px">ROUTE INFO</div>
+        <div style="font-size:22px">📍</div>
+        <div style="font-size:11px;color:var(--ink3)">${dist} km · ${calcPassengers} pax</div>
+        <div style="font-size:11px;color:var(--amber);font-weight:600">${isRush?'Rush Surge +35%':'Normal Rate'}</div>
+      </div>
+    </div>
+
+    <div style="font-size:11px;color:var(--ink3);font-weight:700;letter-spacing:2px;margin-bottom:10px;text-transform:uppercase">All Options — ${from} → ${to}</div>
+    ${totalModes.map((m,i)=>{
+      const stars = '★'.repeat(m.comfort)+'☆'.repeat(5-m.comfort);
+      const isBest = m.id===cheapest.id;
+      const isFast = m.id===fastest.id;
+      return `
+      <div style="background:var(--surface);border:1px solid ${isBest?'rgba(34,197,94,.4)':isFast?'rgba(245,166,35,.4)':'var(--border)'};border-radius:12px;padding:14px;margin-bottom:8px;transition:border-color .2s">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:22px">${m.icon}</span>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px">
+                ${m.name}
+                ${isBest?'<span style="font-size:10px;background:rgba(34,197,94,.2);color:var(--green);padding:2px 7px;border-radius:99px;font-weight:700">CHEAPEST</span>':''}
+                ${isFast&&!isBest?'<span style="font-size:10px;background:var(--amber-glow);color:var(--amber);padding:2px 7px;border-radius:99px;font-weight:700">FASTEST</span>':''}
+              </div>
+              <div style="font-size:11px;color:var(--ink3);margin-top:2px">${stars} · ${m.time} min</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:${isBest?'var(--green)':'var(--amber)'}">₦${m.total.toLocaleString()}</div>
+            ${calcPassengers>1?`<div style="font-size:11px;color:var(--ink3)">₦${m.base.toLocaleString()} each</div>`:''}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;font-size:11px">
+          <span style="color:var(--green)">✓ ${m.pros}</span>
+          <span style="color:var(--ink3)">· ${m.cons}</span>
+        </div>
+      </div>`;
+    }).join('')}
+
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button onclick="saveRoute('${from}','${to}','${calcCity}')" style="flex:1;padding:11px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--ink2);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--amber)'" onmouseout="this.style.borderColor='var(--border)'">
+        ⭐ Save Route
+      </button>
+      <button onclick="shareCalc('${from}','${to}','${calcCity}','${cheapest.total}')" style="flex:1;padding:11px;background:linear-gradient(135deg,#25D366,#128C7E);border:none;border-radius:10px;color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">
+        📲 Share
+      </button>
+    </div>
+  `;
+  renderSavedRoutes();
+}
+
+function saveRoute(from,to,city) {
+  const key = `${city}|${from}|${to}`;
+  if (!savedRoutes.find(r=>r.key===key)) {
+    savedRoutes.push({key,from,to,city,saved:new Date().toLocaleDateString()});
+    localStorage.setItem('savedRoutes',JSON.stringify(savedRoutes));
+    showToast('Route saved! ⭐','success');
+    renderSavedRoutes();
+  } else {
+    showToast('Route already saved!','warn');
+  }
+}
+
+function removeRoute(key) {
+  savedRoutes = savedRoutes.filter(r=>r.key!==key);
+  localStorage.setItem('savedRoutes',JSON.stringify(savedRoutes));
+  renderSavedRoutes();
+  showToast('Route removed','info');
+}
+
+function loadSavedRoute(from,to,city) {
+  document.getElementById('cFrom').value = from;
+  document.getElementById('cTo').value = to;
+  calcCity = city;
+  document.querySelectorAll('#calcCityScroll .city-pill').forEach((p,i)=>{
+    p.classList.toggle('active', Object.keys(CITIES_DATA)[i]===city);
+  });
+  updateCalcBtn();
+  runCalculator();
+}
+
+function renderSavedRoutes() {
+  const el = document.getElementById('savedRoutesSection');
+  if (!el) return;
+  if (!savedRoutes.length) { el.innerHTML=''; return; }
+  el.innerHTML = `
+    <div style="font-size:11px;color:var(--ink3);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">⭐ SAVED ROUTES</div>
+    ${savedRoutes.map(r=>`
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="loadSavedRoute('${r.from}','${r.to}','${r.city}')">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink)">${r.from} → ${r.to}</div>
+          <div style="font-size:11px;color:var(--ink3)">${r.city} · Saved ${r.saved}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:var(--amber)">Recalculate →</span>
+          <button onclick="event.stopPropagation();removeRoute('${r.key}')" style="background:none;border:none;color:var(--ink3);cursor:pointer;font-size:16px;padding:2px 6px" title="Remove">×</button>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+
+function shareCalc(from,to,city,fare) {
+  const text = `Conductor AI says the cheapest fare from ${from} to ${to} in ${city} is ₦${parseInt(fare).toLocaleString()}! Check yours at conductorAI.ng 🚌`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,'_blank');
+}
+
+// ════════════════════════════════════════
+// COMMUNITY FEED
+// ════════════════════════════════════════
+let feedFilter = 'all';
+let feedPosts = [
+  {id:1,user:'Tunde_Lagos',city:'Lagos',type:'traffic',time:'2 min ago',text:'Third Mainland Bridge go-slow don clear small. You fit enter now but still careful.',likes:24,comments:5,verified:true},
+  {id:2,user:'AbujaMama',city:'Abuja',type:'fare',time:'8 min ago',text:'Uber from Maitama to Garki is now ₦2,800! Na the rain cause this surge. Keke still dey charge normal ₦400.',likes:41,comments:12,verified:false},
+  {id:3,user:'PHBoy',city:'Port Harcourt',type:'fuel',time:'15 min ago',text:'NNPC filling station for Rumuokoro don get fuel. Queue still long sha, about 45 mins wait.',likes:67,comments:8,verified:false},
+  {id:4,user:'KanoRider',city:'Kano',type:'traffic',time:'22 min ago',text:'Zoo Road after Jumat prayer don ease. Free flow now!',likes:18,comments:3,verified:false},
+  {id:5,user:'LagosChic',city:'Lagos',type:'accident',time:'34 min ago',text:'🚨 Minor accident on Lekki-Epe Expressway near Chevron junction. One lane blocked. Use inner roads.',likes:89,comments:22,verified:true},
+  {id:6,user:'IbadanKing',city:'Ibadan',type:'fare',time:'1 hr ago',text:'Keke fare from Bodija to Dugbe don increase from ₦200 to ₦300. Driver say fuel price cause am.',likes:35,comments:9,verified:false},
+  {id:7,user:'AbujaGuy',city:'Abuja',type:'traffic',time:'1.5 hr ago',text:'Airport road clear this morning. BRT also moving fast. Good time to travel!',likes:22,comments:4,verified:false},
+  {id:8,user:'LagosDriver',city:'Lagos',type:'general',time:'2 hr ago',text:'Quick reminder: LASTMA dey patrol Ojota axis heavily today. Danfo drivers beware! Park well.',likes:103,comments:31,verified:true},
+];
+let userLikes = new Set(JSON.parse(localStorage.getItem('userLikes')||'[]'));
+
+function initCommunityFeed() {
+  renderFeed();
+}
+
+function filterFeed(filter, btn) {
+  feedFilter = filter;
+  document.querySelectorAll('#feedFilters .lb-filter').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFeed();
+}
+
+function renderFeed() {
+  const typeIcons = {traffic:'🚦',fare:'💰',fuel:'⛽',accident:'🚨',general:'💬'};
+  const typeColors = {traffic:'rgba(245,158,11,.15)',fare:'rgba(34,197,94,.12)',fuel:'rgba(239,68,68,.12)',accident:'rgba(239,68,68,.2)',general:'rgba(59,130,246,.12)'};
+  const typeBorders = {traffic:'rgba(245,158,11,.3)',fare:'rgba(34,197,94,.3)',fuel:'rgba(239,68,68,.3)',accident:'rgba(239,68,68,.5)',general:'rgba(59,130,246,.3)'};
+
+  const filtered = feedFilter==='all' ? feedPosts : feedPosts.filter(p=>p.type===feedFilter);
+  document.getElementById('feedContent').innerHTML = filtered.map(p=>`
+    <div style="background:var(--surface);border:1px solid ${typeBorders[p.type]||'var(--border)'};border-radius:var(--r);padding:16px;margin-bottom:10px;background:${typeColors[p.type]||'var(--surface)'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px">
+            ${p.user.charAt(0)}
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:4px">
+              @${p.user} ${p.verified?'<span style="font-size:12px" title="Verified reporter">✅</span>':''}
+            </div>
+            <div style="font-size:11px;color:var(--ink3)">${p.city} · ${p.time}</div>
+          </div>
+        </div>
+        <span style="font-size:18px" title="${p.type}">${typeIcons[p.type]}</span>
+      </div>
+      <p style="font-size:14px;color:var(--ink2);line-height:1.6;margin-bottom:12px">${p.text}</p>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button onclick="toggleLike(${p.id},this)" style="display:flex;align-items:center;gap:5px;background:none;border:none;color:${userLikes.has(p.id)?'var(--red)':'var(--ink3)'};cursor:pointer;font-size:12px;font-weight:600;padding:0;transition:color .2s">
+          ${userLikes.has(p.id)?'❤️':'🤍'} <span id="likes-${p.id}">${p.likes}</span>
+        </button>
+        <span style="font-size:12px;color:var(--ink3)">💬 ${p.comments}</span>
+        <button onclick="shareFeedPost(${p.id})" style="margin-left:auto;background:none;border:none;color:var(--ink3);cursor:pointer;font-size:12px;font-weight:600">📤 Share</button>
+      </div>
+    </div>
+  `).join('') || `<div style="text-align:center;padding:40px;color:var(--ink3)">No posts in this category yet. Be the first! 🚀</div>`;
+}
+
+function toggleLike(id, btn) {
+  const post = feedPosts.find(p=>p.id===id);
+  if (!post) return;
+  if (userLikes.has(id)) {
+    userLikes.delete(id);
+    post.likes--;
+    btn.style.color='var(--ink3)';
+  } else {
+    userLikes.add(id);
+    post.likes++;
+    btn.style.color='var(--red)';
+    showToast('Liked! ❤️','success',1500);
+  }
+  document.getElementById('likes-'+id).textContent = post.likes;
+  localStorage.setItem('userLikes',JSON.stringify([...userLikes]));
+  btn.querySelector('span')?.previousSibling && (btn.childNodes[0].textContent = userLikes.has(id)?'❤️':'🤍');
+  btn.innerHTML = `${userLikes.has(id)?'❤️':'🤍'} <span id="likes-${id}">${post.likes}</span>`;
+}
+
+function postFeedUpdate() {
+  const text = document.getElementById('feedPostInput').value.trim();
+  const city = document.getElementById('feedCity').value;
+  const type = document.getElementById('feedType').value;
+  if (!text) return;
+  const newPost = {id:Date.now(),user:'You',city,type,time:'Just now',text,likes:0,comments:0,verified:false};
+  feedPosts.unshift(newPost);
+  document.getElementById('feedPostInput').value='';
+  document.getElementById('postBtn').disabled = true;
+  renderFeed();
+  showToast('Update posted! 🎉 The community go see am.','success');
+  // Increment stats
+  const el = document.getElementById('statReports');
+  if(el) el.textContent = (parseInt(el.textContent.replace(/,/g,''))+1).toLocaleString();
+}
+
+function shareFeedPost(id) {
+  const post = feedPosts.find(p=>p.id===id);
+  if (!post) return;
+  const text = `🇳🇬 Conductor AI Community Update from ${post.city}:\n\n"${post.text}"\n\nStay informed! Join Conductor AI for live Nigerian road updates.`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,'_blank');
+}
+
+// ════════════════════════════════════════
+// PROFILE PAGE
+// ════════════════════════════════════════
+let userProfile = JSON.parse(localStorage.getItem('userProfile')||'{}');
+if (!userProfile.name) userProfile = {name:'Naija Traveller',city:'Lagos',reports:parseInt(localStorage.getItem('userReports')||'0'),points:parseInt(localStorage.getItem('userPoints')||'0'),streak:3,joined:'April 2026'};
+
+function renderProfile() {
+  const level = userProfile.points < 100 ? {name:'Road Learner',icon:'🌱',next:100} :
+                userProfile.points < 500 ? {name:'Area Boy',icon:'🧢',next:500} :
+                userProfile.points < 1000 ? {name:'Conductor',icon:'🚌',next:1000} :
+                {name:'Road Oracle',icon:'🔮',next:Infinity};
+  const progressToNext = level.next===Infinity ? 100 : Math.round((userProfile.points/level.next)*100);
+  const totalReports = rStep >= 9 ? userProfile.reports + 1 : userProfile.reports;
+
+  document.getElementById('profileContent').innerHTML = `
+    <!-- Profile Header -->
+    <div style="text-align:center;padding:32px 0 24px">
+      <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--amber),var(--amber2));display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 12px;box-shadow:0 8px 32px rgba(245,166,35,.3)">${level.icon}</div>
+      <div id="profileName" style="font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900;color:var(--ink);letter-spacing:-.5px">${userProfile.name}</div>
+      <div style="font-size:13px;color:var(--ink3);margin-top:4px">${level.name} · ${userProfile.city}</div>
+      <div style="margin-top:10px">
+        <button onclick="editProfileName()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 14px;color:var(--ink2);font-size:12px;cursor:pointer;font-family:inherit">✏️ Edit Name</button>
+      </div>
+    </div>
+
+    <!-- Points & Level -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:11px;color:var(--ink3);font-weight:700;letter-spacing:2px">CONDUCTOR POINTS</div>
+        <div style="font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;color:var(--amber)">${userProfile.points} pts</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:99px;height:6px;overflow:hidden;margin-bottom:8px">
+        <div style="width:${progressToNext}%;height:100%;background:linear-gradient(90deg,var(--amber),var(--amber2));border-radius:99px;transition:width 1s ease"></div>
+      </div>
+      <div style="font-size:11px;color:var(--ink3)">${level.next===Infinity?'Max level reached! 🏆':`${userProfile.points}/${level.next} pts to next level`}</div>
+    </div>
+
+    <!-- Stats grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      ${[
+        {icon:'📍',val:totalReports,label:'Fares Reported'},
+        {icon:'🔥',val:userProfile.streak,label:'Day Streak'},
+        {icon:'⭐',val:savedRoutes.length,label:'Saved Routes'},
+        {icon:'❤️',val:[...userLikes].length,label:'Posts Liked'},
+      ].map(s=>`
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+          <div style="font-size:24px;margin-bottom:6px">${s.icon}</div>
+          <div style="font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;color:var(--amber)">${s.val}</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:3px">${s.label}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- Badges -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--ink3);font-weight:700;letter-spacing:2px;margin-bottom:14px">BADGES EARNED</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${[
+          {icon:'🚌',name:'First Report',earned:true},
+          {icon:'🔥',name:'3-Day Streak',earned:true},
+          {icon:'🌍',name:'Multi-City',earned:savedRoutes.length>0},
+          {icon:'💰',name:'Fare Expert',earned:totalReports>=5},
+          {icon:'👑',name:'Top Contributor',earned:totalReports>=20},
+          {icon:'🔮',name:'Oracle',earned:userProfile.points>=1000},
+        ].map(b=>`
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;opacity:${b.earned?1:.3}">
+            <div style="width:48px;height:48px;border-radius:12px;background:${b.earned?'var(--amber-glow)':'var(--surface2)'};border:1px solid ${b.earned?'rgba(245,166,35,.4)':'var(--border)'};display:flex;align-items:center;justify-content:center;font-size:22px">${b.icon}</div>
+            <div style="font-size:10px;color:${b.earned?'var(--ink2)':'var(--ink3)'};text-align:center;max-width:52px;line-height:1.3">${b.name}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- Home city preference -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--ink3);font-weight:700;letter-spacing:2px;margin-bottom:12px">PREFERENCES</div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:var(--ink2);margin-bottom:6px">Home City</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${Object.entries(CITIES_DATA).map(([c,d])=>`
+            <button onclick="setHomeCity('${c}',this)" style="padding:7px 14px;border-radius:99px;border:1.5px solid ${userProfile.city===c?'var(--amber)':'var(--border)'};background:${userProfile.city===c?'var(--amber-glow)':'var(--surface2)'};color:${userProfile.city===c?'var(--amber)':'var(--ink3)'};font-size:12px;font-weight:600;cursor:pointer;transition:all .2s">${d.emoji} ${c}</button>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- Saved routes in profile -->
+    ${savedRoutes.length ? `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--ink3);font-weight:700;letter-spacing:2px;margin-bottom:12px">SAVED ROUTES (${savedRoutes.length})</div>
+      ${savedRoutes.map(r=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--ink)">${r.from} → ${r.to}</div>
+            <div style="font-size:11px;color:var(--ink3)">${r.city}</div>
+          </div>
+          <button onclick="showPage('calculator');setTimeout(()=>loadSavedRoute('${r.from}','${r.to}','${r.city}'),100)" style="background:var(--amber-glow);border:1px solid rgba(245,166,35,.3);border-radius:8px;padding:6px 12px;color:var(--amber);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Calculate →</button>
+        </div>
+      `).join('')}
+    </div>` : ''}
+
+    <!-- Share profile -->
+    <button onclick="shareProfile()" style="width:100%;padding:13px;background:linear-gradient(135deg,#25D366,#128C7E);border:none;border-radius:10px;color:#fff;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;box-shadow:0 4px 20px rgba(37,211,102,.25)">
+      📲 Share My Conductor Profile
+    </button>
+  `;
+}
+
+function editProfileName() {
+  const name = prompt('Enter your name or nickname:', userProfile.name);
+  if (name && name.trim()) {
+    userProfile.name = name.trim();
+    localStorage.setItem('userProfile', JSON.stringify(userProfile));
+    renderProfile();
+    showToast('Profile updated! 🎉','success');
+  }
+}
+
+function setHomeCity(city, btn) {
+  userProfile.city = city;
+  localStorage.setItem('userProfile', JSON.stringify(userProfile));
+  document.querySelectorAll('#profileContent button[onclick*="setHomeCity"]').forEach(b=>{
+    const c = b.getAttribute('onclick').match(/'([^']+)'/)?.[1];
+    b.style.borderColor = c===city?'var(--amber)':'var(--border)';
+    b.style.background = c===city?'var(--amber-glow)':'var(--surface2)';
+    b.style.color = c===city?'var(--amber)':'var(--ink3)';
+  });
+  showToast(`Home city set to ${city} 🏙️`,'success');
+}
+
+function shareProfile() {
+  const text = `I'm a ${userProfile.name} on Conductor AI — Nigeria's #1 transport oracle! 🚌🇳🇬\n\nI've reported ${userProfile.reports} fares and earned ${userProfile.points} points helping Nigerians get accurate transport data.\n\nJoin me at conductorAI.ng!`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,'_blank');
+}
+
+// Award points on report submission
+const _origRSubmit = window.rSubmit || rSubmit;
+window.rSubmit = function() {
+  userProfile.reports = (userProfile.reports||0) + 1;
+  userProfile.points = (userProfile.points||0) + 50;
+  localStorage.setItem('userProfile', JSON.stringify(userProfile));
+  showToast('+50 Conductor Points earned! 🏆','success',3000);
+  _origRSubmit();
+};
+
+// ════════════════════════════════════════
+// BOTTOM NAV MOBILE (bottom tab bar)
+// ════════════════════════════════════════
+const bottomNav = document.createElement('div');
+bottomNav.id = 'bottomNav';
+bottomNav.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(8,11,15,0.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:none;grid-template-columns:repeat(5,1fr);padding:8px 0 env(safe-area-inset-bottom);';
+bottomNav.innerHTML = [
+  {id:'home',icon:'🏠',label:'Home'},
+  {id:'traffic',icon:'🔮',label:'Traffic'},
+  {id:'chat',icon:'🤖',label:'AI'},
+  {id:'calculator',icon:'🧮',label:'Calc'},
+  {id:'profile',icon:'👤',label:'Profile'},
+].map(t=>`
+  <button onclick="showPage('${t.id}')" id="bnav-${t.id}" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;transition:all .2s">
+    <span style="font-size:20px">${t.icon}</span>
+    <span style="font-size:10px;color:var(--ink3);font-weight:600">${t.label}</span>
+  </button>
+`).join('');
+document.body.appendChild(bottomNav);
+
+// Show bottom nav on mobile
+function updateBottomNav() {
+  const isMobile = window.innerWidth <= 600;
+  bottomNav.style.display = isMobile ? 'grid' : 'none';
+  if (isMobile) document.querySelector('.page.active').style.paddingBottom = '70px';
+}
+window.addEventListener('resize', updateBottomNav);
+updateBottomNav();
+
+// Update bottom nav active state
+const _bnav_orig = window.showPage;
+window.showPage = function(id) {
+  _bnav_orig(id);
+  document.querySelectorAll('[id^="bnav-"]').forEach(b=>{
+    const active = b.id === 'bnav-'+id;
+    b.querySelector('span:last-child').style.color = active?'var(--amber)':'var(--ink3)';
+  });
+};
+
+
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.autocomplete-wrap')&&!e.target.closest('.input-group')) {
+    document.querySelectorAll('.sugg-box').forEach(b=>b.style.display='none');
+  }
+});
+
+// Animate stats on home
+function animateStat(id, target) {
+  let current = 0;
+  const el = document.getElementById(id);
+  if (!el) return;
+  const step = target / 60;
+  const t = setInterval(()=>{
+    current = Math.min(current + step, target);
+    el.textContent = Math.floor(current).toLocaleString();
+    if (current >= target) clearInterval(t);
+  }, 16);
+}
+setTimeout(()=>{ animateStat('statReports',2841); animateStat('statRoutes',186); }, 400);
+</script>
+</body>
+</html>

@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Conductor AI · Admin Manager</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050810;--panel:#080D1A;--card:#0C1220;--card2:#101828;
+  --border:#1A2438;--border2:#243048;
+  --ink:#C8D8F0;--ink2:#7A90B0;--ink3:#3A5070;
+  --cyan:#00D4FF;--cg:rgba(0,212,255,0.12);
+  --green:#00FF88;--gg:rgba(0,255,136,0.10);
+  --amber:#FFB800;--ag:rgba(255,184,0,0.12);
+  --red:#FF4060;--rg:rgba(255,64,96,0.12);
+  --purple:#A855F7;--pg:rgba(168,85,247,0.12);
+  --r:10px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:'Space Grotesk',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.02) 2px,rgba(0,0,0,0.02) 4px);pointer-events:none;z-index:0}
+.ambient{position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 60% 40% at 0% 0%,rgba(0,212,255,0.06) 0%,transparent 60%),radial-gradient(ellipse 50% 60% at 100% 100%,rgba(168,85,247,0.05) 0%,transparent 60%)}
+
+/* ── HEADER ── */
+header{position:sticky;top:0;z-index:200;background:rgba(5,8,16,0.96);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.hbrand{display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--cyan);letter-spacing:1px}
+.hbrand-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.hmeta{display:flex;align-items:center;gap:12px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px}
+.chip.green{background:var(--gg);border:1px solid rgba(0,255,136,.2);color:var(--green)}
+.chip.amber{background:var(--ag);border:1px solid rgba(255,184,0,.2);color:var(--amber)}
+.chip.red{background:var(--rg);border:1px solid rgba(255,64,96,.25);color:var(--red)}
+.chip.cyan{background:var(--cg);border:1px solid rgba(0,212,255,.2);color:var(--cyan)}
+.chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 1.5s ease infinite}
+.nav-links{display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:3px}
+.navl{padding:5px 12px;border-radius:6px;border:none;background:transparent;color:var(--ink3);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.navl:hover{color:var(--ink2)}
+.navl.ext{color:var(--amber)}
+.navl.ext:hover{background:var(--ag)}
+
+/* ── LAYOUT ── */
+.layout{display:grid;grid-template-columns:260px 1fr 290px;min-height:calc(100vh - 56px);position:relative;z-index:1}
+.sidebar{background:var(--panel);border-right:1px solid var(--border);padding:16px 0;overflow-y:auto;height:calc(100vh - 56px);position:sticky;top:56px}
+.main{padding:20px;overflow-y:auto;max-height:calc(100vh - 56px)}
+.rightpanel{background:var(--panel);border-left:1px solid var(--border);padding:16px;overflow-y:auto;height:calc(100vh - 56px);position:sticky;top:56px}
+
+/* ── SIDEBAR ── */
+.sb-section{padding:0 12px;margin-bottom:20px}
+.sb-label{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--ink3);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;padding-left:4px}
+.sb-nav{display:flex;flex-direction:column;gap:2px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;font-size:12px;color:var(--ink2);cursor:pointer;transition:all .2s;border:1px solid transparent;font-family:'Space Grotesk',sans-serif;font-weight:500}
+.sb-item:hover{background:var(--card);color:var(--ink)}
+.sb-item.active{background:var(--cg);border-color:rgba(0,212,255,.2);color:var(--cyan)}
+.sb-icon{font-size:14px;width:20px;text-align:center}
+.sb-badge{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;background:var(--border2);color:var(--ink2)}
+.sb-badge.hot{background:var(--rg);color:var(--red);border:1px solid rgba(255,64,96,.2)}
+
+/* ── AGENT CARDS ── */
+.agent-wrap{display:flex;flex-direction:column;gap:6px}
+.agent-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:11px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.agent-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0 2px 2px 0}
+.agent-card.c-cyan::before{background:var(--cyan)}
+.agent-card.c-green::before{background:var(--green)}
+.agent-card.c-amber::before{background:var(--amber)}
+.agent-card.c-red::before{background:var(--red)}
+.agent-card.c-purple::before{background:var(--purple)}
+.agent-card:hover{border-color:var(--border2);background:var(--card2)}
+.agent-card.selected{border-color:rgba(0,212,255,.3);background:var(--cg)}
+.a-hdr{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.a-icon{font-size:15px}
+.a-name{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--ink);letter-spacing:.3px;flex:1}
+.a-model{font-size:10px;color:var(--ink3);font-family:'JetBrains Mono',monospace;margin-bottom:5px}
+.a-row{display:flex;align-items:center;justify-content:space-between}
+.a-status{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ink3);font-family:'JetBrains Mono',monospace}
+.sdot{width:5px;height:5px;border-radius:50%}
+.sdot.idle{background:var(--ink3)}
+.sdot.running{background:var(--green);box-shadow:0 0 5px var(--green);animation:blink 1s ease infinite}
+.sdot.done{background:var(--cyan)}
+.sdot.error{background:var(--red)}
+.a-run{padding:3px 9px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--ink3);font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.5px}
+.a-run:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cg)}
+
+/* ── API CONFIG ── */
+.api-inp{width:100%;padding:8px 11px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;transition:border-color .2s;margin-bottom:6px}
+.api-inp:focus{border-color:var(--cyan)}
+.api-inp::placeholder{color:var(--ink3)}
+.api-btn{width:100%;padding:8px;background:linear-gradient(135deg,var(--cyan),#0090B0);border:none;border-radius:8px;color:#050810;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:all .2s}
+.api-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,212,255,.3)}
+
+/* ── MAIN AREA ── */
+.section-title{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--ink3);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* Metric cards */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.metric-val{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--cyan);margin-bottom:2px;letter-spacing:-1px}
+.metric-val.green{color:var(--green)}
+.metric-val.amber{color:var(--amber)}
+.metric-val.red{color:var(--red)}
+.metric-lbl{font-size:11px;color:var(--ink3);margin-bottom:6px}
+.metric-change{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green)}
+.metric-change.neg{color:var(--red)}
+
+/* Tabs */
+.tabs{display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:3px;margin-bottom:16px}
+.tab{padding:6px 14px;border-radius:6px;border:none;background:transparent;color:var(--ink3);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.3px}
+.tab.on{background:var(--card2);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.tab:hover:not(.on){color:var(--ink2)}
+
+/* Page panels */
+.page-panel{display:none}
+.page-panel.on{display:block}
+
+/* Updates queue */
+.update-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;animation:slideUp .3s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.uc-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.uc-tag{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.5px}
+.uc-time{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);margin-left:auto}
+.uc-title{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--ink);margin-bottom:5px}
+.uc-body{font-size:12px;color:var(--ink2);line-height:1.6;margin-bottom:10px}
+.uc-actions{display:flex;gap:6px}
+.ua-btn{padding:5px 11px;border-radius:7px;border:1px solid;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.5px}
+.ua-btn.apply{background:var(--gg);border-color:rgba(0,255,136,.3);color:var(--green)}
+.ua-btn.apply:hover{background:rgba(0,255,136,.2)}
+.ua-btn.edit{background:var(--ag);border-color:rgba(255,184,0,.3);color:var(--amber)}
+.ua-btn.reject{background:var(--rg);border-color:rgba(255,64,96,.3);color:var(--red)}
+.empty-queue{text-align:center;padding:36px;color:var(--ink3);font-size:13px;border:1px dashed var(--border);border-radius:var(--r)}
+
+/* Users table */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{background:var(--card2);border:1px solid var(--border);padding:9px 12px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--ink2);letter-spacing:1.5px;text-transform:uppercase}
+.tbl td{border:1px solid var(--border);padding:9px 12px;font-size:12px;color:var(--ink2);vertical-align:middle}
+.tbl tr:hover td{background:var(--card)}
+.tbl-badge{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px}
+.action-btn{padding:3px 9px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--ink3);font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;cursor:pointer;transition:all .2s;margin-right:4px}
+.action-btn:hover{border-color:var(--red);color:var(--red)}
+.action-btn.safe:hover{border-color:var(--green);color:var(--green)}
+
+/* Fare editor */
+.fare-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.fare-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.fc-city{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--amber);letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.fc-route{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
+.fc-route:last-child{border-bottom:none}
+.fc-inp{width:70px;padding:4px 8px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;text-align:right}
+.fc-inp:focus{border-color:var(--amber)}
+
+/* Logs & Terminal */
+.terminal{background:#020508;border:1px solid var(--border);border-radius:var(--r);padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;height:300px;overflow-y:auto;color:#5A7A9A}
+.terminal::-webkit-scrollbar{width:3px}
+.terminal::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.t-info{color:#5A7A9A}
+.t-success{color:var(--green)}
+.t-warn{color:var(--amber)}
+.t-error{color:var(--red)}
+.t-prompt{color:var(--cyan)}
+.t-data{color:var(--purple)}
+
+/* Mini chart */
+.sparkline{height:50px;display:flex;align-items:flex-end;gap:3px;margin-top:6px}
+.spark-bar{background:var(--cg);border-radius:2px 2px 0 0;flex:1;transition:height .5s ease;border-top:1px solid var(--cyan)}
+
+/* Right panel */
+.rp-title{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--ink3);letter-spacing:3px;text-transform:uppercase;margin-bottom:10px}
+.log-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:11px}
+.log-item:last-child{border-bottom:none}
+.log-time{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);white-space:nowrap;margin-top:1px;flex-shrink:0}
+.log-msg{color:var(--ink2);line-height:1.5}
+.log-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
+
+/* Pipeline viz */
+.pipeline{display:flex;align-items:center;gap:0;margin-bottom:20px;overflow-x:auto;padding:4px 0}
+.pipe-node{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0}
+.pipe-circle{width:44px;height:44px;border-radius:50%;border:2px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .4s;position:relative}
+.pipe-circle.active{border-color:var(--green);background:var(--gg);box-shadow:0 0 16px rgba(0,255,136,.3)}
+.pipe-circle.done{border-color:var(--cyan);background:var(--cg)}
+.pipe-circle.error{border-color:var(--red);background:var(--rg)}
+.pipe-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:.5px}
+.pipe-arrow{flex-shrink:0;width:24px;height:2px;background:var(--border);position:relative;top:-8px;transition:background .4s}
+.pipe-arrow.lit{background:linear-gradient(90deg,var(--cyan),var(--green))}
+
+/* Input area */
+.custom-input{width:100%;padding:10px 13px;background:var(--card);border:1px solid var(--border);border-radius:9px;color:var(--ink);font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none;resize:vertical;min-height:70px;transition:border-color .2s}
+.custom-input:focus{border-color:var(--cyan)}
+.custom-input::placeholder{color:var(--ink3)}
+.run-btn{padding:9px 18px;background:linear-gradient(135deg,var(--cyan),#0090B0);border:none;border-radius:8px;color:#050810;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:all .2s}
+.run-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,212,255,.3)}
+.run-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.run-btn.amber{background:linear-gradient(135deg,var(--amber),#CC9000);color:#050810}
+.run-btn.red-btn{background:linear-gradient(135deg,var(--red),#CC2040);color:#fff}
+.run-btn.green-btn{background:linear-gradient(135deg,var(--green),#00BB66);color:#050810}
+
+/* Schedule */
+.sched-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.sched-row:last-child{border-bottom:none}
+.sched-info{display:flex;align-items:center;gap:8px}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--border2);border-radius:99px;cursor:pointer;transition:.3s}
+.toggle-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:var(--ink3);border-radius:50%;transition:.3s}
+.toggle input:checked+.toggle-slider{background:rgba(0,212,255,.3);border:1px solid rgba(0,212,255,.4)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(16px);background:var(--cyan)}
+
+/* Applied log */
+.applied-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--gg);border:1px solid rgba(0,255,136,.15);border-radius:7px;margin-bottom:5px;font-size:11px;animation:slideUp .3s ease}
+
+/* Notifications */
+.notif{position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:9px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;z-index:9999;animation:slideUp .3s ease;max-width:320px}
+
+/* Alert cards */
+.alert-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.alert-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.alert-sev{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.5px}
+.alert-sev.critical{background:var(--rg);border:1px solid rgba(255,64,96,.3);color:var(--red)}
+.alert-sev.warning{background:var(--ag);border:1px solid rgba(255,184,0,.3);color:var(--amber)}
+.alert-sev.info{background:var(--cg);border:1px solid rgba(0,212,255,.3);color:var(--cyan)}
+
+/* City selector */
+.city-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.cpill{padding:5px 13px;border-radius:99px;border:1.5px solid var(--border);background:var(--card);color:var(--ink3);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.cpill.on{border-color:var(--amber);background:var(--ag);color:var(--amber)}
+
+/* Search */
+.search-input{width:100%;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--ink);font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none;margin-bottom:12px}
+.search-input:focus{border-color:var(--cyan)}
+.search-input::placeholder{color:var(--ink3)}
+
+/* Content editor */
+.content-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px}
+.content-type{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.5px;display:inline-flex;margin-bottom:10px}
+.content-edit{width:100%;padding:8px;background:var(--card2);border:1px solid var(--border);border-radius:7px;color:var(--ink);font-family:'Space Grotesk',sans-serif;font-size:12px;resize:vertical;min-height:56px;outline:none;line-height:1.5}
+.content-edit:focus{border-color:var(--amber)}
+
+/* Scrollbars */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* Select */
+select.api-inp{cursor:pointer}
+select option{background:var(--card)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-box{background:var(--panel);border:1px solid var(--border2);border-radius:14px;padding:28px;max-width:440px;width:100%;animation:popIn .3s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.modal-title{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--cyan);margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--ink2);margin-bottom:20px;line-height:1.6}
+
+@media(max-width:1024px){.layout{grid-template-columns:230px 1fr};.rightpanel{display:none}}
+@media(max-width:768px){.layout{grid-template-columns:1fr};.sidebar{display:none};.metrics{grid-template-columns:1fr 1fr}}
+</style>
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#F5A623"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Conductor AI"/>
+</head>
+<body>
+<div class="ambient"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="hbrand">
+    <div class="hbrand-dot"></div>
+    🚌 CONDUCTOR AI · ADMIN
+  </div>
+  <div class="nav-links">
+    <a class="navl ext" href="app-live.html" target="_blank">🌐 Live App</a>
+    <a class="navl ext" href="index.html" target="_blank">📱 Main App</a>
+    <a class="navl ext" href="setup-guide.html" target="_blank">📚 Setup Docs</a>
+  </div>
+  <div class="hmeta">
+    <span class="chip amber" id="connStatus"><span class="chip-dot"></span>SIGNED OUT</span>
+    <span class="chip green" id="dbStatus" style="display:none"><span class="chip-dot"></span>DB LIVE</span>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)" id="clockEl"></span>
+  </div>
+</header>
+
+<div class="layout">
+
+<!-- ── LEFT SIDEBAR ── -->
+<div class="sidebar">
+  <div class="sb-section">
+    <div class="sb-label">Navigation</div>
+    <div class="sb-nav">
+      <div class="sb-item active" onclick="showPanel('dashboard',this)"><span class="sb-icon">📊</span>Dashboard</div>
+      <div class="sb-item" onclick="showPanel('agents',this)"><span class="sb-icon">🤖</span>AI Agents<span class="sb-badge" id="badgeAgents">5</span></div>
+      <div class="sb-item" onclick="showPanel('queue',this)"><span class="sb-icon">📥</span>Update Queue<span class="sb-badge hot" id="badgeQueue">0</span></div>
+      <div class="sb-item" onclick="showPanel('users',this)"><span class="sb-icon">👥</span>Users<span class="sb-badge">—</span></div>
+      <div class="sb-item" onclick="showPanel('fares',this)"><span class="sb-icon">💰</span>Fare Editor</div>
+      <div class="sb-item" onclick="showPanel('content',this)"><span class="sb-icon">📝</span>Content</div>
+      <div class="sb-item" onclick="showPanel('alerts',this)"><span class="sb-icon">🚨</span>Alerts</div>
+      <div class="sb-item" onclick="showPanel('schedule',this)"><span class="sb-icon">⏰</span>Schedule</div>
+      <div class="sb-item" onclick="showPanel('logs',this)"><span class="sb-icon">🖥️</span>Terminal</div>
+    </div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-label">Supabase</div>
+    <input class="api-inp" id="sbUrl" type="url" placeholder="https://xxxx.supabase.co"/>
+    <input class="api-inp" id="sbKey" type="password" placeholder="anon public key"/>
+    <button class="api-btn" onclick="connectSupabase()">⚡ CONNECT</button>
+    <button class="api-btn" style="margin-top:6px;background:linear-gradient(135deg,var(--green),#00AA66)" onclick="handleAuth()">🔐 SIGN IN</button>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-label">Agents</div>
+    <div class="agent-wrap">
+      <div class="agent-card c-cyan selected" id="ac-traffic" onclick="selectAgent('traffic',this)">
+        <div class="a-hdr"><span class="a-icon">🚦</span><span class="a-name">TRAFFIC</span><button class="a-run" onclick="event.stopPropagation();runAgent('traffic')">RUN</button></div>
+        <div class="a-model">llama-3.1-8b</div>
+        <div class="a-row"><span class="a-status"><span class="sdot idle" id="sd-traffic"></span><span id="st-traffic">IDLE</span></span><span id="tc-traffic" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3)">0 runs</span></span></div>
+      </div>
+      <div class="agent-card c-green" id="ac-fare" onclick="selectAgent('fare',this)">
+        <div class="a-hdr"><span class="a-icon">💰</span><span class="a-name">FARE</span><button class="a-run" onclick="event.stopPropagation();runAgent('fare')">RUN</button></div>
+        <div class="a-model">gemma-2-9b</div>
+        <div class="a-row"><span class="a-status"><span class="sdot idle" id="sd-fare"></span><span id="st-fare">IDLE</span></span><span id="tc-fare" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3)">0 runs</span></span></div>
+      </div>
+      <div class="agent-card c-amber" id="ac-alerts" onclick="selectAgent('alerts',this)">
+        <div class="a-hdr"><span class="a-icon">⚠️</span><span class="a-name">ALERTS</span><button class="a-run" onclick="event.stopPropagation();runAgent('alerts')">RUN</button></div>
+        <div class="a-model">mistral-7b</div>
+        <div class="a-row"><span class="a-status"><span class="sdot idle" id="sd-alerts"></span><span id="st-alerts">IDLE</span></span><span id="tc-alerts" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3)">0 runs</span></span></div>
+      </div>
+      <div class="agent-card c-red" id="ac-moderator" onclick="selectAgent('moderator',this)">
+        <div class="a-hdr"><span class="a-icon">🛡️</span><span class="a-name">MODERATOR</span><button class="a-run" onclick="event.stopPropagation();runAgent('moderator')">RUN</button></div>
+        <div class="a-model">llama-3.1-8b</div>
+        <div class="a-row"><span class="a-status"><span class="sdot idle" id="sd-moderator"></span><span id="st-moderator">IDLE</span></span><span id="tc-moderator" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3)">0 runs</span></span></div>
+      </div>
+      <div class="agent-card c-purple" id="ac-content" onclick="selectAgent('content',this)">
+        <div class="a-hdr"><span class="a-icon">✍️</span><span class="a-name">CONTENT</span><button class="a-run" onclick="event.stopPropagation();runAgent('content')">RUN</button></div>
+        <div class="a-model">gemma-2-9b</div>
+        <div class="a-row"><span class="a-status"><span class="sdot idle" id="sd-content"></span><span id="st-content">IDLE</span></span><span id="tc-content" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3)">0 runs</span></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN CONTENT ── -->
+<div class="main">
+
+<!-- DASHBOARD -->
+<div class="page-panel on" id="panel-dashboard">
+  <div class="section-title">System Metrics</div>
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-val" id="mUpdates">0</div>
+      <div class="metric-lbl">Pending Updates</div>
+      <div class="metric-change" id="mUpdatesChange">+0 this session</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val green" id="mAgentRuns">0</div>
+      <div class="metric-lbl">Agent Runs</div>
+      <div class="metric-change" id="mRunsChange">Session total</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val amber" id="mApplied">0</div>
+      <div class="metric-lbl">Applied Updates</div>
+      <div class="metric-change" id="mAppliedChange">0 rejected</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val red" id="mErrors">0</div>
+      <div class="metric-lbl">Errors</div>
+      <div class="metric-change neg" id="mErrorsChange">This session</div>
+    </div>
+  </div>
+
+  <div class="section-title">Agent Pipeline</div>
+  <div class="pipeline" id="pipelineViz">
+    <div class="pipe-node"><div class="pipe-circle" id="pc-traffic">🚦</div><div class="pipe-lbl">TRAFFIC</div></div>
+    <div class="pipe-arrow" id="pa-1"></div>
+    <div class="pipe-node"><div class="pipe-circle" id="pc-fare">💰</div><div class="pipe-lbl">FARE</div></div>
+    <div class="pipe-arrow" id="pa-2"></div>
+    <div class="pipe-node"><div class="pipe-circle" id="pc-alerts">⚠️</div><div class="pipe-lbl">ALERTS</div></div>
+    <div class="pipe-arrow" id="pa-3"></div>
+    <div class="pipe-node"><div class="pipe-circle" id="pc-moderator">🛡️</div><div class="pipe-lbl">MOD</div></div>
+    <div class="pipe-arrow" id="pa-4"></div>
+    <div class="pipe-node"><div class="pipe-circle" id="pc-content">✍️</div><div class="pipe-lbl">CONTENT</div></div>
+  </div>
+  <div style="display:flex;gap:10px;margin-bottom:20px">
+    <button class="run-btn" id="runAllBtn" onclick="runAllAgents()">⚡ RUN ALL AGENTS</button>
+    <button class="run-btn amber" ondblclick="runDemoMode()">🎭 DEMO (dbl-click)</button>
+  </div>
+
+  <div class="section-title">Custom Task</div>
+  <textarea class="custom-input" id="customPrompt" placeholder="Describe a custom update e.g. 'Update Third Mainland bridge traffic to severe congestion due to fuel tanker accident'…"></textarea>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button class="run-btn" onclick="runCustomTask()">🎯 DISPATCH TASK</button>
+    <button class="run-btn green-btn" onclick="showPanel('queue',document.querySelector('[onclick*=queue]'))">📥 View Queue</button>
+  </div>
+
+  <div class="section-title" style="margin-top:20px">Activity Sparkline</div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px">
+    <div id="sparklineWrap" class="sparkline"></div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);margin-top:6px">Updates generated per run</div>
+  </div>
+</div>
+
+<!-- AGENTS PANEL -->
+<div class="page-panel" id="panel-agents">
+  <div class="section-title">Agent Configuration</div>
+  <div id="agentDetail" style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px">
+    <div style="font-size:28px;margin-bottom:10px" id="ad-icon">🚦</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--cyan);margin-bottom:4px" id="ad-name">TRAFFIC AGENT</div>
+    <div style="font-size:13px;color:var(--ink2);margin-bottom:16px" id="ad-desc">Monitors real-time traffic conditions across Nigerian cities and generates congestion reports and route advisories.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:2px;margin-bottom:4px">RUNS THIS SESSION</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--green)" id="ad-runs">0</div>
+      </div>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:2px;margin-bottom:4px">UPDATES GENERATED</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--cyan)" id="ad-updates">0</div>
+      </div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:2px;margin-bottom:8px">SYSTEM PROMPT PREVIEW</div>
+    <pre style="background:#020508;border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;color:#5A9ABD;overflow-x:auto;white-space:pre-wrap;line-height:1.7" id="ad-prompt"></pre>
+    <button class="run-btn" style="margin-top:12px;width:100%" id="ad-runBtn" onclick="runAgent(currentAgent)">⚡ RUN THIS AGENT</button>
+  </div>
+</div>
+
+<!-- UPDATE QUEUE -->
+<div class="page-panel" id="panel-queue">
+  <div class="section-title">Moderation Queue</div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <button class="run-btn" onclick="refreshModeration()">↻ REFRESH</button>
+    <button class="run-btn" onclick="approveAll()">✓ APPROVE ALL</button>
+    <button class="run-btn red-btn" onclick="rejectAll()">✗ REMOVE ALL</button>
+    <button class="run-btn amber" style="margin-left:auto" onclick="runAgent('moderator')">🛡️ RUN MODERATOR</button>
+  </div>
+  <div id="updateQueue"><div class="empty-queue">📥 Queue is empty. Run agents to generate updates.</div></div>
+  
+  <div class="section-title" style="margin-top:20px">Recent Actions</div>
+  <div id="appliedHistory"></div>
+</div>
+
+<!-- USERS PANEL -->
+<div class="page-panel" id="panel-users">
+  <div class="section-title">User Management</div>
+  <input class="search-input" id="userSearch" placeholder="🔍 Search users by name or city…" oninput="filterUsers(this.value)"/>
+  <div class="city-pills" id="userCityFilter">
+    <div class="cpill on" onclick="filterUserCity('all',this)">All Cities</div>
+    <div class="cpill" onclick="filterUserCity('Lagos',this)">🌊 Lagos</div>
+    <div class="cpill" onclick="filterUserCity('Abuja',this)">🏛️ Abuja</div>
+    <div class="cpill" onclick="filterUserCity('Port Harcourt',this)">⛽ Port Harcourt</div>
+    <div class="cpill" onclick="filterUserCity('Kano',this)">🌍 Kano</div>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="tbl" id="usersTable">
+      <thead><tr><th>#</th><th>Name</th><th>City</th><th>Points</th><th>Level</th><th>Reports</th><th>Joined</th><th>Actions</th></tr></thead>
+      <tbody id="usersBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FARE EDITOR -->
+<div class="page-panel" id="panel-fares">
+  <div class="section-title">Fare Index Editor</div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+    <button class="run-btn green-btn" onclick="saveFares()">💾 SAVE ALL FARES</button>
+    <button class="run-btn amber" onclick="resetFares()">↺ RESET</button>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);margin-left:auto" id="faresSaved"></span>
+  </div>
+  <div class="fare-grid" id="fareGrid"></div>
+</div>
+
+<!-- CONTENT PANEL -->
+<div class="page-panel" id="panel-content">
+  <div class="section-title">Content Management</div>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <button class="run-btn" onclick="generateContent()">✍️ GENERATE CONTENT</button>
+    <button class="run-btn green-btn" onclick="publishAll()">📤 PUBLISH ALL</button>
+  </div>
+  <div id="contentCards"><div class="empty-queue">📝 No pending content yet.</div></div>
+</div>
+
+<!-- ALERTS PANEL -->
+<div class="page-panel" id="panel-alerts">
+  <div class="section-title">City Alerts Manager</div>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <button class="run-btn amber" onclick="generateAlerts()">⚠️ GENERATE ALERTS</button>
+    <button class="run-btn red-btn" onclick="showNewAlertModal()">+ NEW ALERT</button>
+  </div>
+  <div id="alertCards"><div class="empty-queue">🚨 No active alerts.</div></div>
+</div>
+
+<!-- SCHEDULE PANEL -->
+<div class="page-panel" id="panel-schedule">
+  <div class="section-title">Automation Schedule</div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div style="flex:1">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);letter-spacing:2px;margin-bottom:6px">RUN INTERVAL</div>
+        <select class="api-inp" id="intervalSelect" style="margin:0;width:auto">
+          <option value="30000">Every 30 seconds</option>
+          <option value="60000">Every 1 minute</option>
+          <option value="300000" selected>Every 5 minutes</option>
+          <option value="900000">Every 15 minutes</option>
+          <option value="3600000">Every 1 hour</option>
+        </select>
+      </div>
+      <button class="run-btn green-btn" onclick="startSchedule()">▶ START</button>
+      <button class="run-btn red-btn" onclick="stopSchedule()">■ STOP</button>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)" id="schedStatus">Scheduler: INACTIVE</div>
+  </div>
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:2px;margin-bottom:12px">AGENT SCHEDULE CONFIG</div>
+    <div class="sched-row">
+      <div class="sched-info"><span style="font-size:16px">🚦</span><div><div style="font-size:13px;font-weight:600">Traffic Agent</div><div style="font-size:11px;color:var(--ink3)">Real-time road conditions</div></div></div>
+      <label class="toggle"><input type="checkbox" id="sched-traffic" checked onchange="toggleSched('traffic',this)"/><span class="toggle-slider"></span></label>
+    </div>
+    <div class="sched-row">
+      <div class="sched-info"><span style="font-size:16px">💰</span><div><div style="font-size:13px;font-weight:600">Fare Agent</div><div style="font-size:11px;color:var(--ink3)">Fare index updates</div></div></div>
+      <label class="toggle"><input type="checkbox" id="sched-fare" checked onchange="toggleSched('fare',this)"/><span class="toggle-slider"></span></label>
+    </div>
+    <div class="sched-row">
+      <div class="sched-info"><span style="font-size:16px">⚠️</span><div><div style="font-size:13px;font-weight:600">Alerts Agent</div><div style="font-size:11px;color:var(--ink3)">City-wide emergency alerts</div></div></div>
+      <label class="toggle"><input type="checkbox" id="sched-alerts" onchange="toggleSched('alerts',this)"/><span class="toggle-slider"></span></label>
+    </div>
+    <div class="sched-row">
+      <div class="sched-info"><span style="font-size:16px">🛡️</span><div><div style="font-size:13px;font-weight:600">Moderator Agent</div><div style="font-size:11px;color:var(--ink3)">Community post moderation</div></div></div>
+      <label class="toggle"><input type="checkbox" id="sched-moderator" onchange="toggleSched('moderator',this)"/><span class="toggle-slider"></span></label>
+    </div>
+    <div class="sched-row">
+      <div class="sched-info"><span style="font-size:16px">✍️</span><div><div style="font-size:13px;font-weight:600">Content Agent</div><div style="font-size:11px;color:var(--ink3)">Tips and announcements</div></div></div>
+      <label class="toggle"><input type="checkbox" id="sched-content" onchange="toggleSched('content',this)"/><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+</div>
+
+<!-- TERMINAL PANEL -->
+<div class="page-panel" id="panel-logs">
+  <div class="section-title">System Terminal</div>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <button class="run-btn" onclick="clearTerminal()">🗑 CLEAR</button>
+    <button class="run-btn green-btn" onclick="exportLogs()">💾 EXPORT LOGS</button>
+  </div>
+  <div class="terminal" id="terminal"></div>
+</div>
+
+</div>
+
+<!-- ── RIGHT PANEL ── -->
+<div class="rightpanel">
+  <div class="rp-title">Live Activity</div>
+  <div id="activityLog" style="margin-bottom:20px"></div>
+
+  <div class="rp-title">Applied Updates</div>
+  <div id="appliedRight"></div>
+
+  <div class="rp-title" style="margin-top:20px">Quick Stats</div>
+  <div style="display:flex;flex-direction:column;gap:6px" id="quickStats">
+    <div style="display:flex;justify-content:space-between;font-size:12px;padding:7px 0;border-bottom:1px solid var(--border)"><span style="color:var(--ink3)">Total Queue</span><span id="qs-queue" style="font-family:'JetBrains Mono',monospace;color:var(--amber)">0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;padding:7px 0;border-bottom:1px solid var(--border)"><span style="color:var(--ink3)">Applied Today</span><span id="qs-applied" style="font-family:'JetBrains Mono',monospace;color:var(--green)">0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;padding:7px 0;border-bottom:1px solid var(--border)"><span style="color:var(--ink3)">Agent Runs</span><span id="qs-runs" style="font-family:'JetBrains Mono',monospace;color:var(--cyan)">0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;padding:7px 0;border-bottom:1px solid var(--border)"><span style="color:var(--ink3)">Errors</span><span id="qs-errors" style="font-family:'JetBrains Mono',monospace;color:var(--red)">0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;padding:7px 0"><span style="color:var(--ink3)">Session Time</span><span id="qs-time" style="font-family:'JetBrains Mono',monospace;color:var(--ink2)">0m</span></div>
+  </div>
+</div>
+
+</div>
+
+<!-- NEW ALERT MODAL -->
+<div class="modal-overlay" id="alertModal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">⚠️ New City Alert</div>
+    <div class="modal-sub">Create a manual alert for users in a specific city.</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:2px;margin-bottom:6px">CITY</div>
+    <select class="api-inp" id="newAlertCity"><option>Lagos</option><option>Abuja</option><option>Port Harcourt</option><option>Kano</option></select>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:2px;margin-bottom:6px">SEVERITY</div>
+    <select class="api-inp" id="newAlertSev"><option value="info">INFO</option><option value="warning">WARNING</option><option value="critical">CRITICAL</option></select>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:2px;margin-bottom:6px">TYPE</div>
+    <select class="api-inp" id="newAlertType">
+      <option value="general">GENERAL</option>
+      <option value="weather">WEATHER</option>
+      <option value="fuel">FUEL</option>
+      <option value="accident">ACCIDENT</option>
+      <option value="closure">CLOSURE</option>
+      <option value="safety">SAFETY</option>
+    </select>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:2px;margin-bottom:6px">TITLE</div>
+    <input class="api-inp" id="newAlertTitle" placeholder="Alert title…"/>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:2px;margin-bottom:6px">MESSAGE</div>
+    <textarea class="api-inp" id="newAlertBody" style="min-height:80px;resize:vertical" placeholder="Alert message for users…"></textarea>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:2px;margin-bottom:6px">ACTION</div>
+    <input class="api-inp" id="newAlertAction" placeholder="What should commuters do? (optional)"/>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:2px;margin-bottom:6px">EXPIRES</div>
+    <select class="api-inp" id="newAlertExp">
+      <option value="2">2 hours</option>
+      <option value="4" selected>4 hours</option>
+      <option value="8">8 hours</option>
+      <option value="12">12 hours</option>
+      <option value="24">24 hours</option>
+    </select>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="run-btn amber" style="flex:1" onclick="createAlert()">📢 CREATE ALERT</button>
+      <button class="run-btn red-btn" onclick="closeModal('alertModal')">✗ CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let isConnected = false;
+let sb = null;
+let adminSession = null;
+let adminUser = null;
+let currentAgent = 'traffic';
+let sessionStart = Date.now();
+let totalRuns = 0, totalUpdates = 0, appliedCount = 0, rejectedCount = 0, errorCount = 0;
+let scheduleTimer = null;
+let sparkData = [];
+let pendingCount = 0;
+let userCityFilter = 'all';
+let agentRuns = {traffic:0,fare:0,alerts:0,moderator:0,content:0};
+let agentUpdates = {traffic:0,fare:0,alerts:0,moderator:0,content:0};
+let liveUsers = null;
+let liveFares = null;
+let liveContent = null;
+let liveAlerts = null;
+let livePosts = null;
+
+// Fake user dataset
+const FAKE_USERS = [
+  {id:1,name:'Emeka Okafor',city:'Lagos',points:1240,reports:28,joined:'2024-01-15'},
+  {id:2,name:'Amina Yusuf',city:'Abuja',points:890,reports:19,joined:'2024-02-03'},
+  {id:3,name:'Chidinma Nwosu',city:'Port Harcourt',points:640,reports:12,joined:'2024-02-20'},
+  {id:4,name:'Musa Bello',city:'Kano',points:450,reports:8,joined:'2024-03-01'},
+  {id:5,name:'Ngozi Eze',city:'Lagos',points:2100,reports:45,joined:'2023-12-10'},
+  {id:6,name:'Taiwo Adeyemi',city:'Lagos',points:320,reports:6,joined:'2024-03-14'},
+  {id:7,name:'Ibrahim Sule',city:'Abuja',points:1780,reports:38,joined:'2023-11-28'},
+  {id:8,name:'Blessing Obi',city:'Port Harcourt',points:560,reports:11,joined:'2024-02-08'},
+  {id:9,name:'Fatima Abdullahi',city:'Kano',points:290,reports:5,joined:'2024-03-22'},
+  {id:10,name:'Chukwuemeka',city:'Lagos',points:3400,reports:72,joined:'2023-10-05'},
+];
+
+const FARE_DATA = {
+  Lagos:{emoji:'🌊',routes:[
+    {name:'Lekki → VI',min:800,max:1500},{name:'Oshodi → TMS',min:500,max:900},
+    {name:'Ikeja → Marina',min:600,max:1100},{name:'Surulere → CMS',min:400,max:700},
+  ]},
+  Abuja:{emoji:'🏛️',routes:[
+    {name:'Wuse → Garki',min:300,max:500},{name:'Maitama → Airport',min:2500,max:4000},
+    {name:'Gwagwalada → CBD',min:800,max:1200},{name:'Lugbe → City',min:600,max:900},
+  ]},
+  'Port Harcourt':{emoji:'⛽',routes:[
+    {name:'GRA → Mile 1',min:500,max:900},{name:'Rumuola → Aba Rd',min:400,max:700},
+    {name:'Trans Amadi → City',min:600,max:1000},{name:'Ada George → Woji',min:350,max:600},
+  ]},
+  Kano:{emoji:'🌍',routes:[
+    {name:'Bompai → Kofar Wambai',min:200,max:400},{name:'Fagge → Airport',min:1200,max:2000},
+    {name:'Nasarawa → City',min:300,max:500},{name:'Sabon Gari → Kano Central',min:250,max:450},
+  ]},
+};
+
+const AGENT_CONFIGS = {
+  traffic:{icon:'🚦',name:'TRAFFIC AGENT',color:'cyan',desc:'Monitors real-time traffic conditions across Nigerian cities and generates congestion reports, route advisories, and go-slow warnings.',
+    prompt:`You are the Conductor AI Traffic Agent monitoring Nigerian roads. Check Lagos, Abuja, Port Harcourt, and Kano. Report traffic conditions in Nigerian street style. Output JSON: {"updates":[{"city":"Lagos","level":"severe|medium|light","alert":"Pidgin/local description","routes_affected":["..."]}]}`},
+  fare:{icon:'💰',name:'FARE AGENT',color:'green',desc:'Tracks transport fare changes across all vehicle types (Danfo, Keke, Okada, BRT, Uber) and updates the fare index.',
+    prompt:`You are the Conductor AI Fare Agent. Check fare changes in Nigeria due to fuel prices, traffic, time of day, weather. Output JSON: {"updates":[{"city":"Lagos","transport":"danfo|keke|okada|uber|brt","old_fare":500,"new_fare":650,"reason":"reason","route":"from - to"}]}`},
+  alerts:{icon:'⚠️',name:'ALERTS AGENT',color:'amber',desc:'Generates city-wide emergency alerts for weather events, fuel scarcity, road closures, accidents, and public safety notices.',
+    prompt:`You are the Conductor AI Alerts Agent. Generate urgent city alerts for Nigeria. Output JSON: {"alerts":[{"city":"Lagos","type":"weather|fuel|accident|closure|safety","severity":"info|warning|critical","title":"Alert title","body":"Alert details in local Nigerian context","duration":"estimated duration"}]}`},
+  moderator:{icon:'🛡️',name:'MODERATOR AGENT',color:'red',desc:'Reviews community feed posts for spam, misinformation, inappropriate content, and investment scams common in Nigerian social media.',
+    prompt:`You are the Conductor AI Moderator. Review these community posts for spam, scams, or inappropriate content. Output JSON: {"reviewed":[{"post_id":1,"decision":"approve|remove|flag","reason":"brief reason","confidence":0.95}],"summary":"overall summary"}`},
+  content:{icon:'✍️',name:'CONTENT AGENT',color:'purple',desc:'Creates transport tips, platform announcements, and educational content tailored for Nigerian commuters in local language.',
+    prompt:`You are the Conductor AI Content Writer. Create helpful transport content for Nigerian users. Use natural Nigerian expressions. Output JSON: {"content":[{"type":"tip|announcement|alert","title":"Title","body":"Content (max 60 words)","cta":"Call to action text"}]}`},
+};
+
+// ════════════════════════════════════════
+// CLOCK
+// ════════════════════════════════════════
+function updateClock(){
+  const now = new Date();
+  document.getElementById('clockEl').textContent = now.toLocaleTimeString('en-NG',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const elapsed = Math.floor((Date.now()-sessionStart)/60000);
+  document.getElementById('qs-time').textContent = elapsed + 'm';
+}
+setInterval(updateClock,1000); updateClock();
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+function showPanel(id, el) {
+  document.querySelectorAll('.page-panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('on');
+  if(el) el.classList.add('active');
+  if(id==='fares'){ if(sb&&adminUser) refreshFares(); else renderFareGrid(); }
+  if(id==='users'){ if(sb&&adminUser) refreshUsers(); else renderUsersTable(); }
+  if(id==='queue'){ if(sb&&adminUser) refreshModeration(); }
+  if(id==='content'){ if(sb&&adminUser) refreshContent(); }
+  if(id==='alerts'){ if(sb&&adminUser) refreshAlerts(); }
+  if(id==='agents') renderAgentDetail(currentAgent);
+}
+
+// ════════════════════════════════════════
+// SUPABASE
+// ════════════════════════════════════════
+function setConnChip(state, text) {
+  const el = document.getElementById('connStatus');
+  el.innerHTML = '<span class="chip-dot"></span>' + text;
+  el.className = 'chip ' + state;
+}
+
+function setSession(s) {
+  adminSession = s;
+  adminUser = s?.user || null;
+  isConnected = !!adminUser;
+  setConnChip(adminUser ? 'green' : 'amber', adminUser ? 'SIGNED IN' : 'SIGNED OUT');
+  if(adminUser){
+    refreshStats();
+    refreshUsers();
+    refreshFares();
+    refreshModeration();
+    refreshContent();
+    refreshAlerts();
+  }
+}
+
+async function connectSupabase() {
+  const cfg = window.CONDUCTOR_CONFIG || {};
+  const url = (document.getElementById('sbUrl').value || cfg.SUPABASE_URL || localStorage.getItem('admin_sb_url') || '').trim();
+  const key = (document.getElementById('sbKey').value || cfg.SUPABASE_ANON_KEY || localStorage.getItem('admin_sb_key') || '').trim();
+  if(!url || !key){showNotif('Enter Supabase URL + anon key','error');return;}
+  try{
+    sb = window.supabase.createClient(url,key);
+    localStorage.setItem('admin_sb_url', url);
+    localStorage.setItem('admin_sb_key', key);
+    document.getElementById('dbStatus').style.display='inline-flex';
+    termLog('success','✓ Supabase connected');
+    addActivity('Supabase connected','success');
+    const {data:{session}} = await sb.auth.getSession();
+    if(session) setSession(session); else setSession(null);
+    sb.auth.onAuthStateChange((_,s)=>setSession(s));
+  }catch(e){
+    termLog('error','✗ Supabase connection failed: '+e.message);
+    showNotif('Supabase connection failed: '+e.message,'error');
+  }
+}
+
+async function handleAuth() {
+  if(!sb){showNotif('Connect Supabase first','warn');return;}
+  if(adminUser){await sb.auth.signOut();return;}
+  const email = prompt('Enter admin email (must be allowlisted):');
+  if(!email) return;
+  const {error} = await sb.auth.signInWithOtp({email});
+  if(error) showNotif('Auth error: '+error.message,'error');
+  else showNotif('✓ Check your email for the magic link','success');
+}
+
+async function fnInvoke(name, opts) {
+  if(!sb) throw new Error('No Supabase')
+  const {data, error} = await sb.functions.invoke(name, opts||{})
+  if(error) throw error
+  return data
+}
+
+async function refreshStats() {
+  if(!sb || !adminUser) return;
+  try{
+    const data = await fnInvoke('admin-stats',{method:'GET'});
+    const u = data?.users_total ?? '—';
+    const usersBadge = document.querySelector('[onclick*=users] .sb-badge');
+    if(usersBadge) usersBadge.textContent = u;
+  }catch(e){}
+}
+
+async function refreshUsers() {
+  if(!sb || !adminUser) return;
+  const q = document.getElementById('userSearch')?.value || '';
+  const city = userCityFilter || 'all';
+  const data = await fnInvoke('admin-users',{body:{action:'list',q,city,limit:200}});
+  liveUsers = data?.users || [];
+  renderUsersTable();
+}
+
+async function refreshFares() {
+  if(!sb || !adminUser) return;
+  const data = await fnInvoke('admin-fares',{method:'GET'});
+  liveFares = data?.fares || [];
+  renderFareGrid();
+}
+
+async function refreshContent() {
+  if(!sb || !adminUser) return;
+  const data = await fnInvoke('admin-content',{method:'GET'});
+  const items = data?.content || [];
+  liveContent = items.filter(x=>x && x.published===false);
+  renderContentCards();
+}
+
+async function refreshAlerts() {
+  if(!sb || !adminUser) return;
+  const data = await fnInvoke('admin-alerts',{method:'GET'});
+  const items = data?.alerts || [];
+  liveAlerts = items.filter(x=>x && x.active===true);
+  renderAlertCards();
+}
+
+// ════════════════════════════════════════
+// AGENT SYSTEM
+// ════════════════════════════════════════
+function selectAgent(agent, el) {
+  currentAgent = agent;
+  document.querySelectorAll('.agent-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  renderAgentDetail(agent);
+}
+
+function renderAgentDetail(agent) {
+  const cfg = AGENT_CONFIGS[agent];
+  document.getElementById('ad-icon').textContent = cfg.icon;
+  document.getElementById('ad-name').textContent = cfg.name;
+  document.getElementById('ad-desc').textContent = cfg.desc;
+  document.getElementById('ad-runs').textContent = agentRuns[agent];
+  document.getElementById('ad-updates').textContent = agentUpdates[agent];
+  document.getElementById('ad-prompt').textContent = cfg.prompt;
+  document.getElementById('ad-runBtn').onclick = ()=>runAgent(agent);
+}
+
+function setAgentStatus(agent, status) {
+  const dot = document.getElementById('sd-'+agent);
+  const txt = document.getElementById('st-'+agent);
+  dot.className = 'sdot ' + status.toLowerCase();
+  txt.textContent = status;
+  const circle = document.getElementById('pc-'+agent);
+  if(circle){
+    circle.className = 'pipe-circle ' + (status==='RUNNING'?'active':status==='DONE'?'done':status==='ERROR'?'error':'');
+  }
+}
+
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+async function runAgent(agent) {
+  if(!sb){showNotif('Connect Supabase first','error');return;}
+  if(!adminUser){showNotif('Sign in first','error');return;}
+  const cfg = AGENT_CONFIGS[agent];
+  setAgentStatus(agent,'RUNNING');
+  termLog('prompt',`\n$ agent:${agent} → dispatching...`);
+  const fnMap = {traffic:'traffic-agent',fare:'fare-agent',alerts:'alerts-agent',moderator:'moderator-agent',content:'content-agent'};
+  try {
+    const {data, error} = await sb.functions.invoke(fnMap[agent],{body:{}});
+    if(error) throw error;
+    processResult(agent, {updates:[{title:`${cfg.name} ran`,body:`ok=${data?.success===true} · count=${data?.count ?? '—'}`,type:agent}]});
+    setAgentStatus(agent,'DONE');
+    agentRuns[agent]++;
+    totalRuns++;
+    document.getElementById('tc-'+agent).textContent = agentRuns[agent]+' run'+(agentRuns[agent]!==1?'s':'');
+    document.getElementById('mAgentRuns').textContent = totalRuns;
+    document.getElementById('qs-runs').textContent = totalRuns;
+    termLog('success',`✓ Agent ${agent} completed`);
+    addActivity(`${cfg.icon} ${cfg.name} ran successfully`,'success');
+    if(document.getElementById('panel-agents').classList.contains('on')) renderAgentDetail(agent);
+  } catch(e){
+    setAgentStatus(agent,'ERROR');
+    errorCount++;
+    document.getElementById('mErrors').textContent = errorCount;
+    document.getElementById('qs-errors').textContent = errorCount;
+    termLog('error',`✗ ${agent} failed: ${e.message}`);
+    addActivity(`${cfg.name} error: ${e.message}`,'error');
+    showNotif(`${agent} agent failed: ${e.message}`,'error');
+  }
+}
+
+async function runAllAgents() {
+  if(!sb){showNotif('Connect Supabase first','error');return;}
+  if(!adminUser){showNotif('Sign in first','error');return;}
+  document.getElementById('runAllBtn').disabled=true;
+  document.getElementById('runAllBtn').textContent='⏳ RUNNING...';
+  animatePipelineArrows();
+  for(const agent of ['traffic','fare','alerts','moderator','content']){
+    await runAgent(agent);
+    await sleep(300);
+  }
+  document.getElementById('runAllBtn').disabled=false;
+  document.getElementById('runAllBtn').textContent='⚡ RUN ALL AGENTS';
+  showNotif('All agents completed!','success');
+}
+
+async function runCustomTask() {
+  if(!sb){showNotif('Connect Supabase first!','error');return;}
+  if(!adminUser){showNotif('Sign in first','error');return;}
+  const prompt = document.getElementById('customPrompt').value.trim();
+  if(!prompt){showNotif('Enter a custom instruction first!','error');return;}
+  termLog('prompt',`\n$ custom-task → "${prompt.slice(0,60)}..."`);
+  processResult('content',{updates:[{title:'Custom Task',body:prompt,type:'custom'}]},'custom');
+  document.getElementById('customPrompt').value='';
+  showNotif('Custom task queued','success');
+}
+
+// ════════════════════════════════════════
+// PROCESS AGENT RESULTS → UPDATE QUEUE
+// ════════════════════════════════════════
+const TYPE_COLORS={traffic:['rgba(59,130,246,.12)','rgba(59,130,246,.25)','#3B82F6'],fare:['rgba(34,197,94,.1)','rgba(34,197,94,.25)','#22C55E'],alerts:['rgba(245,158,11,.12)','rgba(245,158,11,.3)','#F59E0B'],moderator:['rgba(239,68,68,.1)','rgba(239,68,68,.25)','#EF4444'],content:['rgba(168,85,247,.1)','rgba(168,85,247,.25)','#A855F7'],custom:['rgba(0,212,255,.08)','rgba(0,212,255,.2)','#00D4FF']};
+const TYPE_ICONS={traffic:'🚦',fare:'💰',alerts:'⚠️',moderator:'🛡️',content:'✍️',custom:'🎯'};
+
+function processResult(agent, data, typeOverride) {
+  const type = typeOverride || agent;
+  const items = data.updates || data.alerts || data.content || data.reviewed || [];
+  if(!items.length){termLog('warn','  ⚠ No updates generated');return;}
+  const queueEl = document.getElementById('updateQueue');
+  if(queueEl.querySelector('.empty-queue')) queueEl.innerHTML='';
+  const [bg,border,color] = TYPE_COLORS[type]||TYPE_COLORS.custom;
+  items.slice(0,4).forEach((item,i)=>{
+    const uid = `upd-${Date.now()}-${i}`;
+    const title = item.title||(item.city?`${item.city} ${type} update`:'Update');
+    const body = item.body||item.alert||item.content||item.reason||JSON.stringify(item).slice(0,120);
+    const card = document.createElement('div');
+    card.className='update-card'; card.id=uid;
+    card.style.cssText=`background:${bg};border:1px solid ${border}`;
+    card.innerHTML=`
+      <div class="uc-hdr">
+        <span style="font-size:15px">${TYPE_ICONS[type]||'⚙️'}</span>
+        <span class="uc-tag" style="background:${bg};color:${color};border:1px solid ${border}">${type.toUpperCase()}</span>
+        <span class="uc-time">${new Date().toLocaleTimeString()}</span>
+      </div>
+      <div class="uc-title">${title}</div>
+      <div class="uc-body">${body}</div>
+      <div class="uc-actions">
+        <button class="ua-btn apply" onclick="applyUpdate('${uid}','${title.replace(/'/g,'').slice(0,50)}','${type}')">✓ APPLY</button>
+        <button class="ua-btn edit" onclick="editUpdate('${uid}')">✎ EDIT</button>
+        <button class="ua-btn reject" onclick="rejectUpdate('${uid}')">✗ REJECT</button>
+      </div>`;
+    queueEl.prepend(card);
+    pendingCount++;
+    totalUpdates++;
+    agentUpdates[agent]=(agentUpdates[agent]||0)+1;
+  });
+  document.getElementById('mUpdates').textContent = pendingCount;
+  document.getElementById('badgeQueue').textContent = pendingCount;
+  document.getElementById('qs-queue').textContent = pendingCount;
+  document.getElementById('mUpdatesChange').textContent = `+${totalUpdates} this session`;
+  sparkData.push(items.length);
+  if(sparkData.length>14) sparkData.shift();
+  renderSparkline();
+}
+
+// ════════════════════════════════════════
+// UPDATE QUEUE ACTIONS
+// ════════════════════════════════════════
+function applyUpdate(uid, title, type) {
+  const card = document.getElementById(uid);
+  if(!card) return;
+  card.style.cssText+='opacity:0;transform:translateX(-8px);transition:all .3s';
+  setTimeout(()=>{
+    card.remove(); pendingCount--; appliedCount++;
+    document.getElementById('mUpdates').textContent = Math.max(0,pendingCount);
+    document.getElementById('badgeQueue').textContent = Math.max(0,pendingCount);
+    document.getElementById('qs-queue').textContent = Math.max(0,pendingCount);
+    document.getElementById('mApplied').textContent = appliedCount;
+    document.getElementById('qs-applied').textContent = appliedCount;
+    const r = document.createElement('div');
+    r.className='applied-item';
+    r.innerHTML=`<span style="color:var(--green)">✓</span><span style="flex:1;color:var(--ink2);margin:0 8px">${title}</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3)">${new Date().toLocaleTimeString()}</span>`;
+    document.getElementById('appliedHistory').prepend(r);
+    const r2 = r.cloneNode(true);
+    const ar = document.getElementById('appliedRight');
+    if(ar.children.length>=5) ar.lastChild.remove();
+    ar.prepend(r2);
+    const queueEl = document.getElementById('updateQueue');
+    if(!queueEl.querySelector('.update-card')) queueEl.innerHTML='<div class="empty-queue">📥 Queue empty — run agents to generate more.</div>';
+  },300);
+  termLog('success',`✓ Applied: ${title.slice(0,50)}`);
+  addActivity(`Applied: ${title.slice(0,40)}...`,'success');
+  showNotif('Update applied! ✓','success');
+}
+
+function rejectUpdate(uid) {
+  const card = document.getElementById(uid);
+  if(!card) return;
+  card.style.cssText+='opacity:0;transition:opacity .3s';
+  setTimeout(()=>{
+    card.remove(); pendingCount--; rejectedCount++;
+    document.getElementById('mUpdates').textContent = Math.max(0,pendingCount);
+    document.getElementById('badgeQueue').textContent = Math.max(0,pendingCount);
+    document.getElementById('qs-queue').textContent = Math.max(0,pendingCount);
+    document.getElementById('mApplied').textContent = appliedCount;
+    document.getElementById('mAppliedChange').textContent = `${rejectedCount} rejected`;
+    const queueEl = document.getElementById('updateQueue');
+    if(!queueEl.querySelector('.update-card')) queueEl.innerHTML='<div class="empty-queue">📥 Queue empty — run agents to generate more.</div>';
+  },300);
+  termLog('warn','  ✗ Update rejected');
+}
+
+function editUpdate(uid) {
+  const card = document.getElementById(uid);
+  if(!card) return;
+  const body = card.querySelector('.uc-body');
+  const newText = prompt('Edit this update:', body.textContent);
+  if(newText){body.textContent=newText;showNotif('Update edited!','success')}
+}
+
+async function refreshModeration() {
+  if(!(sb&&adminUser)) return;
+  try{
+    const data = await fnInvoke('admin-feed',{body:{action:'list',moderated:false,limit:200}});
+    livePosts = data?.posts || [];
+    renderModerationQueue();
+  }catch(e){showNotif('Queue load failed: '+e.message,'error')}
+}
+
+function renderModerationQueue() {
+  const wrap = document.getElementById('updateQueue');
+  if(!wrap) return;
+  if(!(sb&&adminUser&&Array.isArray(livePosts))){
+    return;
+  }
+  if(livePosts.length===0){
+    wrap.innerHTML = `<div class="empty-queue">📥 No unmoderated posts.</div>`;
+    pendingCount = 0;
+    document.getElementById('mUpdates').textContent = 0;
+    document.getElementById('badgeQueue').textContent = 0;
+    document.getElementById('qs-queue').textContent = 0;
+    return;
+  }
+  pendingCount = livePosts.length;
+  document.getElementById('mUpdates').textContent = pendingCount;
+  document.getElementById('badgeQueue').textContent = pendingCount;
+  document.getElementById('qs-queue').textContent = pendingCount;
+  wrap.innerHTML = livePosts.map(p=>`
+    <div class="update-card mod-card" id="post-${p.id}">
+      <div class="uc-top">
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="uc-tag" style="background:var(--cg);color:var(--cyan);border:1px solid rgba(0,212,255,.2)">${(p.type||'post').toUpperCase()}</div>
+          <div class="uc-title">${p.city} · ${p.username||'Unknown'}</div>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3)">${(p.created_at||'').slice(11,16)}</div>
+      </div>
+      <div class="uc-body">${(p.content||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+        <button class="ua-btn apply" onclick="approvePost(${p.id})">✓ APPROVE</button>
+        <button class="ua-btn edit" onclick="flagPost(${p.id})">⚑ FLAG</button>
+        <button class="ua-btn reject" onclick="removePost(${p.id})">✗ REMOVE</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function approvePost(id){
+  if(!(sb&&adminUser)) return;
+  await fnInvoke('admin-feed',{body:{id,moderated:true,removed:false,flagged:false,moderation_reason:null}});
+  const el=document.getElementById(`post-${id}`); if(el) el.remove();
+  refreshModeration();
+  showNotif('Approved','success');
+}
+
+async function flagPost(id){
+  if(!(sb&&adminUser)) return;
+  await fnInvoke('admin-feed',{body:{id,moderated:true,removed:false,flagged:true,moderation_reason:'flagged_by_admin'}});
+  const el=document.getElementById(`post-${id}`); if(el) el.remove();
+  refreshModeration();
+  showNotif('Flagged','warn');
+}
+
+async function removePost(id){
+  if(!(sb&&adminUser)) return;
+  await fnInvoke('admin-feed',{body:{id,moderated:true,removed:true,flagged:false,moderation_reason:'removed_by_admin'}});
+  const el=document.getElementById(`post-${id}`); if(el) el.remove();
+  refreshModeration();
+  showNotif('Removed','success');
+}
+
+function approveAll() {
+  if(sb&&adminUser){
+    const ids = [...document.querySelectorAll('.mod-card')].map(el=>parseInt(el.id.replace('post-',''),10)).filter(n=>!isNaN(n));
+    Promise.all(ids.map(id=>fnInvoke('admin-feed',{body:{id,moderated:true,removed:false,flagged:false,moderation_reason:null}}))).then(()=>{
+      showNotif('Approved all','success');
+      refreshModeration();
+    }).catch(e=>showNotif('Approve failed: '+e.message,'error'));
+    return;
+  }
+  document.querySelectorAll('.update-card').forEach(c=>{
+    const uid=c.id;const title=c.querySelector('.uc-title').textContent;const type=c.querySelector('.uc-tag').textContent.toLowerCase();
+    setTimeout(()=>applyUpdate(uid,title,type),Math.random()*400);
+  });
+}
+
+function rejectAll() {
+  if(sb&&adminUser){
+    const ids = [...document.querySelectorAll('.mod-card')].map(el=>parseInt(el.id.replace('post-',''),10)).filter(n=>!isNaN(n));
+    Promise.all(ids.map(id=>fnInvoke('admin-feed',{body:{id,moderated:true,removed:true,flagged:false,moderation_reason:'removed_by_admin'}}))).then(()=>{
+      showNotif('Removed all','success');
+      refreshModeration();
+    }).catch(e=>showNotif('Remove failed: '+e.message,'error'));
+    return;
+  }
+  document.querySelectorAll('.update-card').forEach(c=>setTimeout(()=>rejectUpdate(c.id),Math.random()*300));
+}
+
+// ════════════════════════════════════════
+// USERS TABLE
+// ════════════════════════════════════════
+let filteredUsers = [...FAKE_USERS];
+function getLevel(pts){return pts>=1000?{name:'Road Oracle',color:'var(--purple)'}:pts>=500?{name:'Conductor',color:'var(--cyan)'}:pts>=100?{name:'Area Boy',color:'var(--amber)'}:{name:'Road Learner',color:'var(--green)'}}
+function renderUsersTable() {
+  const search = document.getElementById('userSearch').value.toLowerCase();
+  const src = (sb&&adminUser&&Array.isArray(liveUsers)) ? liveUsers.map(u=>({
+    id:u.id,
+    name:u.username||'Anonymous',
+    city:u.city,
+    points:u.points||0,
+    reports:u.reports_count||0,
+    joined:(u.created_at||'').slice(0,10),
+    verified:!!u.verified
+  })) : FAKE_USERS;
+  filteredUsers = src.filter(u=>{
+    const cityOk = userCityFilter==='all'||u.city===userCityFilter;
+    const searchOk = !search||u.name.toLowerCase().includes(search)||u.city.toLowerCase().includes(search);
+    return cityOk && searchOk;
+  });
+  document.querySelector('#usersTable th:first-child').parentElement.parentElement.nextElementSibling.id='usersBody';
+  const tbody = document.getElementById('usersBody');
+  tbody.innerHTML = filteredUsers.map((u,i)=>{
+    const lv = getLevel(u.points);
+    const vbtn = (sb&&adminUser&&u.id && typeof u.id==='string')
+      ? `<button class="action-btn safe" onclick="toggleVerify('${u.id}',${u.verified? 'false':'true'})">${u.verified?'UNVERIFY':'VERIFY'}</button>`
+      : `<button class="action-btn safe">✉ MSG</button>`;
+    return `<tr>
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--ink3)">${i+1}</td>
+      <td style="font-weight:600;color:var(--ink)">${u.name}</td>
+      <td>${u.city}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--amber)">${u.points.toLocaleString()}</td>
+      <td><span class="tbl-badge" style="background:rgba(0,0,0,.2);color:${lv.color};border:1px solid ${lv.color}44">${lv.name}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace">${u.reports}</td>
+      <td style="color:var(--ink3)">${u.joined}</td>
+      <td>
+        ${vbtn}
+      </td>
+    </tr>`}).join('');
+  document.querySelector('[onclick*=users] .sb-badge').textContent = filteredUsers.length;
+}
+function filterUsers(val){ if(sb&&adminUser) refreshUsers(); else renderUsersTable() }
+function filterUserCity(city, el) {
+  userCityFilter = city;
+  document.querySelectorAll('#userCityFilter .cpill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  if(sb&&adminUser) refreshUsers(); else renderUsersTable();
+}
+
+async function toggleVerify(id, next) {
+  if(!sb||!adminUser) return;
+  try{
+    await fnInvoke('admin-users',{body:{id,verified:next}});
+    refreshUsers();
+    showNotif('User updated','success');
+  }catch(e){showNotif('Update failed: '+e.message,'error')}
+}
+
+// ════════════════════════════════════════
+// FARE EDITOR
+// ════════════════════════════════════════
+function renderFareGrid() {
+  const grid = document.getElementById('fareGrid');
+  if(sb&&adminUser&&Array.isArray(liveFares)){
+    const emoji={Lagos:'🌊',Abuja:'🏛️','Port Harcourt':'⛽',Kano:'🌍',All:'🚌'};
+    const byCity = {};
+    liveFares.forEach(r=>{
+      const c=r.city||'All';
+      if(!byCity[c]) byCity[c]=[];
+      byCity[c].push(r);
+    });
+    grid.innerHTML = Object.entries(byCity).map(([city,rows])=>`
+      <div class="fare-card">
+        <div class="fc-city">${emoji[city]||'🚌'} ${city}</div>
+        ${rows.map((r)=>`
+          <div class="fc-route">
+            <span style="font-size:12px;color:var(--ink2)">${(r.transport_type||'').toUpperCase()} · ${r.route_from} → ${r.route_to}</span>
+            <div style="display:flex;align-items:center;gap:4px">
+              <input class="fc-inp" value="${r.min_fare}" data-city="${r.city}" data-transport="${r.transport_type}" data-from="${r.route_from}" data-to="${r.route_to}" data-kind="min"/>
+              <span style="font-size:10px;color:var(--ink3)">–</span>
+              <input class="fc-inp" value="${r.max_fare}" data-city="${r.city}" data-transport="${r.transport_type}" data-from="${r.route_from}" data-to="${r.route_to}" data-kind="max"/>
+            </div>
+          </div>`).join('')}
+      </div>`).join('');
+    return;
+  }
+  grid.innerHTML = Object.entries(FARE_DATA).map(([city,data])=>`
+      <div class="fare-card">
+        <div class="fc-city">${data.emoji} ${city}</div>
+        ${data.routes.map((r,i)=>`
+          <div class="fc-route">
+            <span style="font-size:12px;color:var(--ink2)">${r.name}</span>
+            <div style="display:flex;align-items:center;gap:4px">
+              <input class="fc-inp" value="${r.min}" id="fare-${city}-${i}-min"/>
+              <span style="font-size:10px;color:var(--ink3)">–</span>
+              <input class="fc-inp" value="${r.max}" id="fare-${city}-${i}-max"/>
+            </div>
+          </div>`).join('')}
+      </div>`).join('');
+}
+function saveFares() {
+  if(sb&&adminUser&&Array.isArray(liveFares)){
+    const els = [...document.querySelectorAll('#fareGrid .fc-inp[data-city]')];
+    const map = {};
+    els.forEach(el=>{
+      const k = [el.dataset.city,el.dataset.transport,el.dataset.from,el.dataset.to].join('|');
+      if(!map[k]) map[k]={city:el.dataset.city,transport_type:el.dataset.transport,route_from:el.dataset.from,route_to:el.dataset.to,min_fare:null,max_fare:null,verified:true};
+      const v = parseInt(el.value,10);
+      if(el.dataset.kind==='min') map[k].min_fare = isNaN(v)?0:v;
+      if(el.dataset.kind==='max') map[k].max_fare = isNaN(v)?0:v;
+    });
+    const fares = Object.values(map).filter(r=>r.min_fare>0 && r.max_fare>0);
+    fnInvoke('admin-fares',{body:{fares}}).then(()=>{
+      document.getElementById('faresSaved').textContent = '✓ Saved at '+new Date().toLocaleTimeString();
+      showNotif('Fare index saved!','success');
+      termLog('success','✓ Fare index updated');
+      addActivity('Fare index manually updated','success');
+      refreshFares();
+    }).catch(e=>showNotif('Save failed: '+e.message,'error'));
+    return;
+  }
+  document.getElementById('faresSaved').textContent = '✓ Saved at '+new Date().toLocaleTimeString();
+  showNotif('Fare index saved!','success');
+  termLog('success','✓ Fare index updated');
+  addActivity('Fare index manually updated','success');
+}
+function resetFares() {renderFareGrid();showNotif('Fares reset to defaults','warn')}
+
+// ════════════════════════════════════════
+// CONTENT
+// ════════════════════════════════════════
+async function generateContent() {
+  await runAgent('content');
+  if(sb&&adminUser) refreshContent();
+}
+function renderContentCards(){
+  const wrap = document.getElementById('contentCards');
+  if(!wrap) return;
+  if(!(sb&&adminUser&&Array.isArray(liveContent))){
+    return;
+  }
+  if(liveContent.length===0){
+    wrap.innerHTML = `<div class="empty-queue">📝 No pending content. Run Content agent to generate.</div>`;
+    return;
+  }
+  const typeColors={tip:'var(--cyan)',announcement:'var(--amber)',safety:'var(--green)'};
+  const typeBg={tip:'var(--cg)',announcement:'var(--ag)',safety:'var(--gg)'};
+  wrap.innerHTML = liveContent.map(item=>`
+    <div class="content-card" data-id="${item.id}">
+      <div class="content-type" style="background:${typeBg[item.type]||'var(--cg)'};color:${typeColors[item.type]||'var(--cyan)'};border:1px solid ${typeColors[item.type]||'var(--cyan)'}44">${(item.type||'tip').toUpperCase()}</div>
+      <div style="font-weight:600;color:var(--ink);margin-bottom:6px">${item.title||''}</div>
+      <textarea class="content-edit" data-field="body">${item.body||''}</textarea>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="ua-btn apply" onclick="publishContentId(${item.id},true)">📤 PUBLISH</button>
+        <button class="ua-btn reject" onclick="dismissContent(${item.id})">✗</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function publishContentId(id, published){
+  if(!sb||!adminUser) return;
+  try{
+    await fnInvoke('admin-content',{body:{id, published}});
+    showNotif('Content updated','success');
+    refreshContent();
+  }catch(e){showNotif('Publish failed: '+e.message,'error')}
+}
+
+function dismissContent(id){
+  const el=document.querySelector(`.content-card[data-id="${id}"]`);
+  if(el) el.remove();
+}
+
+function publishAll(){
+  if(!(sb&&adminUser&&Array.isArray(liveContent))) return;
+  Promise.all(liveContent.map(i=>fnInvoke('admin-content',{body:{id:i.id,published:true}}))).then(()=>{
+    showNotif('All content published!','success');
+    refreshContent();
+  }).catch(e=>showNotif('Publish failed: '+e.message,'error'));
+}
+
+// ════════════════════════════════════════
+// ALERTS
+// ════════════════════════════════════════
+async function generateAlerts() {
+  await runAgent('alerts');
+  if(sb&&adminUser) refreshAlerts();
+}
+function showNewAlertModal(){document.getElementById('alertModal').style.display='flex'}
+function closeModal(id){document.getElementById(id).style.display='none'}
+function createAlert() {
+  const city=document.getElementById('newAlertCity').value;
+  const sev=document.getElementById('newAlertSev').value;
+  const type=document.getElementById('newAlertType').value;
+  const title=document.getElementById('newAlertTitle').value.trim();
+  const body=document.getElementById('newAlertBody').value.trim();
+  const action=(document.getElementById('newAlertAction').value||'').trim();
+  const exp=parseInt(document.getElementById('newAlertExp').value,10);
+  if(!title||!body){showNotif('Fill in all fields!','error');return}
+  if(!(sb&&adminUser)){showNotif('Sign in first','error');return;}
+  fnInvoke('admin-alerts',{body:{city,type,severity:sev,title,body,action:action||null,expires_hours:isNaN(exp)?4:exp}}).then(()=>{
+    closeModal('alertModal');
+    showNotif('Alert created!','success');
+    addActivity(`Alert created: ${title}`,'success');
+    document.getElementById('newAlertTitle').value='';
+    document.getElementById('newAlertBody').value='';
+    document.getElementById('newAlertAction').value='';
+    refreshAlerts();
+  }).catch(e=>showNotif('Create failed: '+e.message,'error'));
+}
+
+function renderAlertCards(){
+  const wrap = document.getElementById('alertCards');
+  if(!wrap) return;
+  if(!(sb&&adminUser&&Array.isArray(liveAlerts))){
+    return;
+  }
+  if(liveAlerts.length===0){
+    wrap.innerHTML = `<div class="empty-queue">🚨 No active alerts.</div>`;
+    return;
+  }
+  wrap.innerHTML = liveAlerts.map(a=>`
+    <div class="alert-card" data-id="${a.id}">
+      <div class="alert-hdr">
+        <span style="font-size:18px">📢</span>
+        <div>
+          <div style="font-weight:600;margin-bottom:2px">${a.title||''}</div>
+          <div style="font-size:11px;color:var(--ink3)">${a.city} · Active</div>
+        </div>
+        <span class="alert-sev ${(a.severity||'warning')}" style="margin-left:auto">${(a.severity||'WARNING').toUpperCase()}</span>
+      </div>
+      <div style="font-size:13px;color:var(--ink2);line-height:1.6;margin-bottom:10px">${a.body||''}</div>
+      <div style="display:flex;gap:6px">
+        <button class="ua-btn apply" onclick="deactivateAlert(${a.id})">✓ RESOLVE</button>
+        <button class="ua-btn reject" onclick="deactivateAlert(${a.id})">✗ REMOVE</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function deactivateAlert(id){
+  if(!(sb&&adminUser)) return;
+  try{
+    await fnInvoke('admin-alerts',{body:{id,active:false}});
+    showNotif('Alert updated','success');
+    refreshAlerts();
+  }catch(e){showNotif('Update failed: '+e.message,'error')}
+}
+
+// ════════════════════════════════════════
+// SCHEDULE
+// ════════════════════════════════════════
+const schedActive = {traffic:true,fare:true,alerts:false,moderator:false,content:false};
+function toggleSched(agent, input) {schedActive[agent]=input.checked;showNotif(`${agent} schedule ${input.checked?'enabled':'disabled'}`,'success')}
+function startSchedule() {
+  if(!sb){showNotif('Connect Supabase first!','error');return}
+  if(!adminUser){showNotif('Sign in first','error');return}
+  if(scheduleTimer) clearInterval(scheduleTimer);
+  const interval = parseInt(document.getElementById('intervalSelect').value);
+  document.getElementById('schedStatus').textContent = `Scheduler: ACTIVE — running every ${interval/1000}s`;
+  document.getElementById('schedStatus').style.color = 'var(--green)';
+  scheduleTimer = setInterval(async()=>{
+    const active=Object.entries(schedActive).filter(([,v])=>v).map(([k])=>k);
+    if(!active.length) return;
+    termLog('info',`\n⏰ Scheduled run: ${active.join(', ')}`);
+    for(const a of active){await runAgent(a);await sleep(300)}
+  }, interval);
+  showNotif('Auto-schedule started!','success');
+  addActivity('Scheduler started','success');
+}
+function stopSchedule() {
+  if(scheduleTimer){clearInterval(scheduleTimer);scheduleTimer=null}
+  document.getElementById('schedStatus').textContent = 'Scheduler: INACTIVE';
+  document.getElementById('schedStatus').style.color = '';
+  showNotif('Scheduler stopped','warn');
+}
+
+// ════════════════════════════════════════
+// TERMINAL
+// ════════════════════════════════════════
+function termLog(type, msg) {
+  const terminal = document.getElementById('terminal');
+  const span = document.createElement('span');
+  span.className = 't-'+type;
+  span.textContent = msg+'\n';
+  terminal.appendChild(span);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+function clearTerminal(){document.getElementById('terminal').innerHTML='';termLog('info','Terminal cleared.')}
+function exportLogs(){
+  const text=document.getElementById('terminal').innerText;
+  const blob=new Blob([text],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='conductor-admin-logs.txt';a.click();
+  showNotif('Logs exported!','success');
+}
+
+// ════════════════════════════════════════
+// ACTIVITY LOG
+// ════════════════════════════════════════
+function addActivity(msg, type='info') {
+  const colors={success:'var(--green)',error:'var(--red)',info:'var(--cyan)',warn:'var(--amber)'};
+  const log = document.getElementById('activityLog');
+  const item = document.createElement('div');
+  item.className='log-item';
+  item.innerHTML=`<span class="log-dot" style="background:${colors[type]}"></span><div><div class="log-msg">${msg}</div></div><span class="log-time">${new Date().toLocaleTimeString()}</span>`;
+  log.prepend(item);
+  if(log.children.length>10) log.lastChild.remove();
+}
+
+// ════════════════════════════════════════
+// SPARKLINE
+// ════════════════════════════════════════
+function renderSparkline() {
+  const wrap = document.getElementById('sparklineWrap');
+  const max = Math.max(...sparkData,1);
+  wrap.innerHTML = sparkData.map(v=>`<div class="spark-bar" style="height:${Math.max(8,(v/max)*46)}px"></div>`).join('');
+}
+
+// ════════════════════════════════════════
+// PIPELINE ANIMATION
+// ════════════════════════════════════════
+async function animatePipelineArrows() {
+  const arrows = ['pa-1','pa-2','pa-3','pa-4'];
+  for(const a of arrows){document.getElementById(a).classList.add('lit');await sleep(400)}
+  setTimeout(()=>arrows.forEach(a=>document.getElementById(a).classList.remove('lit')),3000);
+}
+
+// ════════════════════════════════════════
+// DEMO MODE
+// ════════════════════════════════════════
+async function runDemoMode() {
+  showNotif('🎭 Running DEMO mode (no API calls needed)','warn');
+  document.getElementById('runAllBtn').disabled=true;
+  document.getElementById('runAllBtn').textContent='⏳ DEMO RUNNING...';
+  animatePipelineArrows();
+  const demoData={
+    traffic:{updates:[
+      {title:'Lagos Traffic Update',body:'Oshodi interchange don block completely! Third Mainland Bridge also slow from Adeniji Adele. Allow extra 45 mins for all routes.'},
+      {title:'Abuja Congestion',body:'Berger roundabout dey move but slow. Airport Road clear. Expect delays around UTC and Wuse Market areas.'},
+    ]},
+    fare:{updates:[
+      {title:'Lagos Uber Surge',body:'Uber surge pricing active on Lagos Island due to rain. Lekki–VI routes up ₦600–₦900. Consider Danfo for short hops.'},
+      {title:'Abuja Keke Increase',body:'Keke fares in Abuja up ₦50 across all routes due to fuel price increase. Wuse–Garki now ₦350.'},
+    ]},
+    alerts:{updates:[
+      {title:'Heavy Rain Warning — Lagos',body:'Heavy downpour expected Lagos Island axis 3pm–7pm. Flooding likely on Ahmadu Bello Way. Commuters should leave office early.'},
+    ]},
+    moderator:{updates:[
+      {title:'Moderation Report',body:'2 spam posts removed (investment scam pattern). 5 legitimate fare reports approved. Community feed is clean.'},
+    ]},
+    content:{updates:[
+      {title:'Travel Tip: Beat the Go-Slow',body:'Use BRT from Oshodi for long-distance journeys. Danfo best for short routes. Okada fastest but check traffic on Saturdays.'},
+    ]},
+  };
+  const agents=['traffic','fare','alerts','moderator','content'];
+  for(const agent of agents){
+    setAgentStatus(agent,'RUNNING');
+    await sleep(800);
+    processResult(agent,demoData[agent],agent);
+    setAgentStatus(agent,'DONE');
+    agentRuns[agent]++;totalRuns++;
+    document.getElementById('tc-'+agent).textContent=agentRuns[agent]+' run';
+    await sleep(300);
+  }
+  document.getElementById('mAgentRuns').textContent=totalRuns;
+  document.getElementById('qs-runs').textContent=totalRuns;
+  document.getElementById('runAllBtn').disabled=false;
+  document.getElementById('runAllBtn').textContent='⚡ RUN ALL AGENTS';
+  showNotif('Demo complete! Add OpenRouter key to go live.','success');
+  termLog('success','\n✓ Demo pipeline complete!');
+  addActivity('Demo pipeline completed','success');
+}
+
+// ════════════════════════════════════════
+// NOTIFICATIONS
+// ════════════════════════════════════════
+function showNotif(msg, type='info') {
+  const colors={success:'rgba(0,255,136,.15)',error:'rgba(255,64,96,.15)',info:'rgba(0,212,255,.1)',warn:'rgba(255,184,0,.15)'};
+  const borders={success:'rgba(0,255,136,.4)',error:'rgba(255,64,96,.4)',info:'rgba(0,212,255,.3)',warn:'rgba(255,184,0,.4)'};
+  const txts={success:'var(--green)',error:'var(--red)',info:'var(--cyan)',warn:'var(--amber)'};
+  const el=document.createElement('div');
+  el.className='notif';
+  el.style.cssText=`background:${colors[type]};border:1px solid ${borders[type]};color:${txts[type]}`;
+  el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300)},3200);
+}
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+window.addEventListener('load',()=>{
+  const cfg = window.CONDUCTOR_CONFIG || {};
+  const u = (cfg.SUPABASE_URL || localStorage.getItem('admin_sb_url') || '').trim();
+  const k = (cfg.SUPABASE_ANON_KEY || localStorage.getItem('admin_sb_key') || '').trim();
+  if(u) document.getElementById('sbUrl').value = u;
+  if(k) document.getElementById('sbKey').value = k;
+  termLog('info','Conductor AI Admin Manager v2.0');
+  termLog('info','━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  termLog('info','5 agents ready: traffic, fare, alerts, moderator, content');
+  termLog('info','Connect Supabase and sign in to run agents.');
+  termLog('info','');
+  addActivity('Admin Manager loaded','info');
+  renderSparkline();
+  renderFareGrid();
+  renderUsersTable();
+  if(u && k) connectSupabase();
+});
+</script>
+</body>
+</html>

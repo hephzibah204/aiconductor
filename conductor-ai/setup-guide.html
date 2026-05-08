@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Conductor AI · Setup Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#04060A;--s1:#080C12;--s2:#0C1218;--s3:#101820;
+  --b1:#182030;--b2:#20304A;
+  --ink:#D8E8F8;--ink2:#7898B8;--ink3:#384858;
+  --cyan:#00D4FF;--cg:rgba(0,212,255,0.1);
+  --green:#00FF88;--gg:rgba(0,255,136,0.08);
+  --amber:#FFB800;--ag:rgba(255,184,0,0.1);
+  --red:#FF4060;--rg:rgba(255,64,96,0.1);
+  --purple:#B060FF;--pg:rgba(176,96,255,0.1);
+  --r:10px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;min-height:100vh;line-height:1.7}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 40% at 0% 0%,rgba(0,212,255,0.05),transparent 60%),radial-gradient(ellipse 50% 50% at 100% 100%,rgba(176,96,255,0.04),transparent 60%);pointer-events:none;z-index:0}
+
+/* HEADER */
+header{background:rgba(4,6,10,0.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.hbrand{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--cyan);letter-spacing:1px;display:flex;align-items:center;gap:10px}
+.hbrand-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.hbadge{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:2px;padding:4px 12px;border-radius:99px;background:var(--cg);border:1px solid rgba(0,212,255,.2);color:var(--cyan)}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 57px);position:relative;z-index:1}
+.sidebar{background:var(--s1);border-right:1px solid var(--b1);padding:28px 0;position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto}
+.main{padding:40px 48px 80px;max-width:900px}
+
+/* SIDEBAR NAV */
+.snav-section{margin-bottom:28px;padding:0 20px}
+.snav-label{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--ink3);letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;padding-left:4px}
+.snav-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;font-size:13px;color:var(--ink2);cursor:pointer;transition:all .2s;margin-bottom:2px;text-decoration:none}
+.snav-item:hover{background:var(--s2);color:var(--ink)}
+.snav-item.active{background:var(--cg);color:var(--cyan);border:1px solid rgba(0,212,255,.15)}
+.snav-num{width:20px;height:20px;border-radius:50%;background:var(--b1);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--ink3);flex-shrink:0}
+.snav-item.active .snav-num{background:rgba(0,212,255,.2);color:var(--cyan)}
+
+/* MAIN CONTENT */
+.section{margin-bottom:56px;scroll-margin-top:80px}
+.section-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:900;color:var(--ink);letter-spacing:-.5px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.section-sub{font-size:14px;color:var(--ink2);margin-bottom:24px;max-width:680px;line-height:1.7}
+
+/* STEP CARDS */
+.step-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);margin-bottom:14px;overflow:hidden}
+.step-hdr{padding:16px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--b1);cursor:pointer;user-select:none}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--cg);border:1px solid rgba(0,212,255,.25);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--cyan);flex-shrink:0}
+.step-title{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--ink);letter-spacing:.5px;flex:1}
+.step-badge{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:3px 9px;border-radius:99px;letter-spacing:1px}
+.step-body{padding:20px}
+
+/* CODE BLOCKS */
+.code-wrap{position:relative;margin-bottom:14px}
+.code-label{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--ink3);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.copy-btn{background:var(--s3);border:1px solid var(--b1);border-radius:6px;padding:3px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--ink2);cursor:pointer;transition:all .2s;letter-spacing:.5px}
+.copy-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.copy-btn.copied{border-color:var(--green);color:var(--green)}
+pre{background:#020408;border:1px solid var(--b1);border-radius:var(--r);padding:18px 20px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;color:#7AAAC8}
+pre .kw{color:#00D4FF}     /* keywords */
+pre .fn{color:#B060FF}     /* functions */
+pre .str{color:#00FF88}    /* strings */
+pre .cm{color:#384858}     /* comments */
+pre .num{color:#FFB800}    /* numbers */
+pre .type{color:#FF8060}   /* types */
+pre .op{color:#7898B8}     /* operators */
+
+/* INFO BOXES */
+.info-box{border-radius:var(--r);padding:14px 16px;font-size:13px;margin-bottom:14px;display:flex;gap:10px;line-height:1.65}
+.info-box.tip{background:var(--cg);border:1px solid rgba(0,212,255,.2);color:rgba(0,212,255,.9)}
+.info-box.warn{background:var(--ag);border:1px solid rgba(255,184,0,.2);color:rgba(255,184,0,.9)}
+.info-box.success{background:var(--gg);border:1px solid rgba(0,255,136,.2);color:rgba(0,255,136,.9)}
+.info-box.error{background:var(--rg);border:1px solid rgba(255,64,96,.2);color:rgba(255,64,96,.9)}
+
+/* ARCHITECTURE DIAGRAM */
+.arch{display:flex;flex-direction:column;gap:0;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;margin-bottom:20px}
+.arch-row{display:flex;align-items:stretch;border-bottom:1px solid var(--b1)}
+.arch-row:last-child{border-bottom:none}
+.arch-label{width:140px;flex-shrink:0;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--ink3);letter-spacing:1px;text-transform:uppercase;border-right:1px solid var(--b1);display:flex;align-items:center}
+.arch-content{flex:1;padding:14px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.arch-node{padding:5px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;border:1px solid}
+.arch-arrow{color:var(--b2);font-size:16px;align-self:center}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px}
+th{background:var(--s2);border:1px solid var(--b1);padding:10px 14px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--ink2);letter-spacing:1px;text-transform:uppercase}
+td{border:1px solid var(--b1);padding:10px 14px;color:var(--ink2);vertical-align:top}
+td code{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cyan);background:var(--cg);padding:2px 7px;border-radius:4px}
+tr:hover td{background:var(--s2)}
+
+/* CHECKLIST */
+.checklist{list-style:none;margin-bottom:14px}
+.checklist li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--b1);font-size:13px;color:var(--ink2)}
+.checklist li:last-child{border-bottom:none}
+.check{width:18px;height:18px;border-radius:4px;background:var(--gg);border:1px solid rgba(0,255,136,.25);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:2px}
+
+/* SCROLLBARS */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+
+/* PROGRESS BAR at top */
+.progress-bar{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--purple));z-index:999;transition:width .1s}
+
+/* TOAST */
+.toast-fixed{position:fixed;bottom:20px;right:20px;background:var(--gg);border:1px solid rgba(0,255,136,.3);border-radius:9px;padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green);font-weight:700;z-index:999;animation:slideIn .3s ease;display:none}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .main{padding:28px 20px 60px}
+}
+</style>
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#F5A623"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Conductor AI"/>
+</head>
+<body>
+
+<div class="progress-bar" id="progBar"></div>
+<div class="toast-fixed" id="toast">✓ Copied!</div>
+
+<header>
+  <div class="hbrand">
+    <div class="hbrand-dot"></div>
+    CONDUCTOR AI · SETUP GUIDE
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <a href="index.html" style="padding:4px 10px;border-radius:6px;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.2);color:#F5A623;font-size:11px;font-weight:700;text-decoration:none;font-family:monospace">📱 Main App</a>
+    <a href="app-live.html" style="padding:4px 10px;border-radius:6px;background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.2);color:#00FF88;font-size:11px;font-weight:700;text-decoration:none;font-family:monospace">🌐 Live App</a>
+    <a href="admin.html" style="padding:4px 10px;border-radius:6px;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);color:#00D4FF;font-size:11px;font-weight:700;text-decoration:none;font-family:monospace">⚙️ Admin</a>
+  </div>
+</header>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="snav-section">
+    <div class="snav-label">Overview</div>
+    <a class="snav-item active" href="#architecture" onclick="setActive(this)"><span class="snav-num">①</span> Architecture</a>
+    <a class="snav-item" href="#prereqs" onclick="setActive(this)"><span class="snav-num">②</span> Prerequisites</a>
+  </div>
+  <div class="snav-section">
+    <div class="snav-label">Supabase Setup</div>
+    <a class="snav-item" href="#project" onclick="setActive(this)"><span class="snav-num">③</span> Create Project</a>
+    <a class="snav-item" href="#schema" onclick="setActive(this)"><span class="snav-num">④</span> Database Schema</a>
+    <a class="snav-item" href="#rls" onclick="setActive(this)"><span class="snav-num">⑤</span> Row Level Security</a>
+    <a class="snav-item" href="#realtime" onclick="setActive(this)"><span class="snav-num">⑥</span> Enable Realtime</a>
+    <a class="snav-item" href="#auth" onclick="setActive(this)"><span class="snav-num">⑦</span> Auth Config</a>
+  </div>
+  <div class="snav-section">
+    <div class="snav-label">Edge Functions</div>
+    <a class="snav-item" href="#edge-setup" onclick="setActive(this)"><span class="snav-num">⑧</span> CLI Setup</a>
+    <a class="snav-item" href="#edge-traffic" onclick="setActive(this)"><span class="snav-num">⑨</span> Traffic Agent</a>
+    <a class="snav-item" href="#edge-fare" onclick="setActive(this)"><span class="snav-num">⑩</span> Fare Agent</a>
+    <a class="snav-item" href="#edge-alerts" onclick="setActive(this)"><span class="snav-num">⑪</span> Alert Agent</a>
+    <a class="snav-item" href="#edge-cron" onclick="setActive(this)"><span class="snav-num">⑫</span> Cron Schedule</a>
+  </div>
+  <div class="snav-section">
+    <div class="snav-label">Deploy</div>
+    <a class="snav-item" href="#deploy" onclick="setActive(this)"><span class="snav-num">⑬</span> Deploy & Go Live</a>
+    <a class="snav-item" href="#checklist" onclick="setActive(this)"><span class="snav-num">⑭</span> Final Checklist</a>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- ARCHITECTURE -->
+<div class="section" id="architecture">
+  <div class="section-title">🏗️ System Architecture</div>
+  <div class="section-sub">Conductor AI runs entirely on frontend + Supabase. No dedicated backend server needed. Here's how all the pieces connect.</div>
+
+  <div class="arch">
+    <div class="arch-row">
+      <div class="arch-label">Browser</div>
+      <div class="arch-content">
+        <span class="arch-node" style="background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);color:var(--cyan)">HTML App</span>
+        <span class="arch-arrow">→</span>
+        <span class="arch-node" style="background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);color:var(--cyan)">Supabase JS SDK</span>
+        <span class="arch-arrow">→</span>
+        <span class="arch-node" style="background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);color:var(--cyan)">Auth + DB + Realtime</span>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label">Database</div>
+      <div class="arch-content">
+        <span class="arch-node" style="background:rgba(0,255,136,.08);border-color:rgba(0,255,136,.25);color:var(--green)">PostgreSQL</span>
+        <span style="font-size:12px;color:var(--ink3);margin:0 4px">fare_reports · feed_posts · traffic_updates · alerts</span>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label">Realtime</div>
+      <div class="arch-content">
+        <span class="arch-node" style="background:rgba(0,255,136,.08);border-color:rgba(0,255,136,.25);color:var(--green)">Supabase Realtime</span>
+        <span class="arch-arrow">→</span>
+        <span style="font-size:12px;color:var(--ink3)">WebSocket pushes DB changes to all browsers instantly</span>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label">AI Agents</div>
+      <div class="arch-content">
+        <span class="arch-node" style="background:rgba(176,96,255,.1);border-color:rgba(176,96,255,.3);color:var(--purple)">Edge Functions</span>
+        <span class="arch-arrow">→</span>
+        <span class="arch-node" style="background:rgba(255,184,0,.1);border-color:rgba(255,184,0,.3);color:var(--amber)">OpenRouter API</span>
+        <span class="arch-arrow">→</span>
+        <span style="font-size:12px;color:var(--ink3)">Llama 3.1, Gemma 2, Mistral (FREE)</span>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label">Scheduler</div>
+      <div class="arch-content">
+        <span class="arch-node" style="background:rgba(255,64,96,.1);border-color:rgba(255,64,96,.3);color:var(--red)">pg_cron</span>
+        <span class="arch-arrow">→</span>
+        <span style="font-size:12px;color:var(--ink3)">Triggers Edge Functions every N minutes automatically — no server needed</span>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label">Hosting</div>
+      <div class="arch-content">
+        <span class="arch-node" style="background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);color:var(--cyan)">Netlify / Vercel</span>
+        <span style="font-size:12px;color:var(--ink3);margin:0 8px">or</span>
+        <span class="arch-node" style="background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);color:var(--cyan)">GitHub Pages</span>
+        <span style="font-size:12px;color:var(--ink3);margin:0 8px">or</span>
+        <span class="arch-node" style="background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);color:var(--cyan)">WhatsApp Link</span>
+        <span style="font-size:12px;color:var(--ink3)">— all FREE</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box tip">💡 <div><strong>Why no backend?</strong> Supabase Edge Functions run on Deno servers — they handle all server-side logic (API keys, AI calls, data processing) without you managing any server. pg_cron replaces cron jobs. Realtime replaces WebSocket servers.</div></div>
+</div>
+
+<!-- PREREQS -->
+<div class="section" id="prereqs">
+  <div class="section-title">📋 Prerequisites</div>
+  <div class="section-sub">Everything you need before starting. All free.</div>
+
+  <table>
+    <tr><th>Tool</th><th>Purpose</th><th>Free Tier</th><th>Link</th></tr>
+    <tr><td><code>Supabase</code></td><td>Database, Auth, Realtime, Edge Functions</td><td>✅ 500MB DB, 2M edge invocations</td><td>supabase.com</td></tr>
+    <tr><td><code>OpenRouter</code></td><td>Access to 100+ AI models via one API</td><td>✅ Free models (Llama, Gemma, Mistral)</td><td>openrouter.ai</td></tr>
+    <tr><td><code>Supabase CLI</code></td><td>Deploy Edge Functions from terminal</td><td>✅ Free</td><td>supabase.com/docs/guides/cli</td></tr>
+    <tr><td><code>Netlify/Vercel</code></td><td>Host the HTML app</td><td>✅ Generous free tier</td><td>netlify.com / vercel.com</td></tr>
+    <tr><td><code>Node.js</code></td><td>Required for Supabase CLI</td><td>✅ Free</td><td>nodejs.org</td></tr>
+  </table>
+
+  <div class="info-box warn">⚠️ <span>Get your <strong>OpenRouter API key</strong> at openrouter.ai/keys before starting Edge Functions setup. You'll need it as a secret.</span></div>
+</div>
+
+<!-- PROJECT SETUP -->
+<div class="section" id="project">
+  <div class="section-title">① Create Supabase Project</div>
+  <div class="section-sub">Create your free project and get the credentials needed for the app.</div>
+
+  <div class="step-card">
+    <div class="step-hdr">
+      <div class="step-num">1</div>
+      <div class="step-title">Create Project at supabase.com</div>
+      <span class="step-badge" style="background:var(--gg);color:var(--green);border:1px solid rgba(0,255,136,.2)">FREE</span>
+    </div>
+    <div class="step-body">
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Go to <strong style="color:var(--cyan)">supabase.com</strong> → New Project → choose a region close to Nigeria (Europe West or US East are fastest) → set a strong database password.</p>
+      <div class="info-box tip">💡 Save your database password somewhere safe — you'll need it for CLI login.</div>
+    </div>
+  </div>
+
+  <div class="step-card">
+    <div class="step-hdr">
+      <div class="step-num">2</div>
+      <div class="step-title">Get Your API Credentials</div>
+    </div>
+    <div class="step-body">
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Go to <strong style="color:var(--cyan)">Settings → API</strong> in your Supabase dashboard. You need:</p>
+      <table>
+        <tr><th>Credential</th><th>Where to Find</th><th>Used For</th></tr>
+        <tr><td><code>Project URL</code></td><td>Settings → API → Project URL</td><td>Supabase SDK init</td></tr>
+        <tr><td><code>anon public</code></td><td>Settings → API → anon public key</td><td>Frontend SDK (safe to expose)</td></tr>
+        <tr><td><code>service_role</code></td><td>Settings → API → service_role key</td><td>Edge Functions only — NEVER expose in frontend</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- DATABASE SCHEMA -->
+<div class="section" id="schema">
+  <div class="section-title">② Database Schema</div>
+  <div class="section-sub">Run this SQL in your Supabase SQL Editor (Database → SQL Editor → New Query). Creates all tables needed for the app.</div>
+
+  <div class="info-box tip">💡 Go to your Supabase Dashboard → SQL Editor → paste each block → Run</div>
+
+  <div class="code-wrap">
+    <div class="code-label">COMPLETE SCHEMA SQL <button class="copy-btn" onclick="copyCode(this,'schema')">COPY</button></div>
+    <pre id="schema"><span class="cm">-- ═══════════════════════════════════════════
+-- CONDUCTOR AI · SUPABASE SCHEMA
+-- Run this entire block in SQL Editor
+-- ═══════════════════════════════════════════</span>
+
+<span class="cm">-- Enable required extensions</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> <span class="str">"uuid-ossp"</span>;
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> <span class="str">"pg_cron"</span>;
+
+<span class="cm">-- ─── FARE REPORTS ───</span>
+<span class="cm">-- Stores crowdsourced fare data from users</span>
+<span class="kw">CREATE TABLE</span> <span class="fn">fare_reports</span> (
+  id            <span class="type">uuid</span> <span class="kw">DEFAULT</span> uuid_generate_v4() <span class="kw">PRIMARY KEY</span>,
+  city          <span class="type">text</span> <span class="kw">NOT NULL</span>,
+  from_area     <span class="type">text</span> <span class="kw">NOT NULL</span>,
+  to_area       <span class="type">text</span> <span class="kw">NOT NULL</span>,
+  transport_mode <span class="type">text</span> <span class="kw">NOT NULL</span>,
+  fare_amount   <span class="type">integer</span> <span class="kw">NOT NULL</span>,
+  time_slot     <span class="type">text</span>,
+  duration_label <span class="type">text</span>,
+  duration_mins <span class="type">integer</span>,
+  travel_date   <span class="type">date</span>,
+  note          <span class="type">text</span>,
+  user_id       <span class="type">uuid</span> <span class="kw">REFERENCES</span> auth.users(id),
+  username      <span class="type">text</span>,
+  verified      <span class="type">boolean</span> <span class="kw">DEFAULT</span> <span class="kw">false</span>,
+  created_at    <span class="type">timestamptz</span> <span class="kw">DEFAULT</span> now()
+);
+
+<span class="cm">-- ─── TRAFFIC UPDATES ───</span>
+<span class="cm">-- AI-generated and crowdsourced traffic data</span>
+<span class="kw">CREATE TABLE</span> <span class="fn">traffic_updates</span> (
+  id          <span class="type">uuid</span> <span class="kw">DEFAULT</span> uuid_generate_v4() <span class="kw">PRIMARY KEY</span>,
+  city        <span class="type">text</span> <span class="kw">NOT NULL</span>,
+  level       <span class="type">text</span> <span class="kw">NOT NULL CHECK</span> (level <span class="kw">IN</span> (<span class="str">'low'</span>, <span class="str">'medium'</span>, <span class="str">'high'</span>, <span class="str">'severe'</span>)),
+  alert       <span class="type">text</span>,
+  routes_affected <span class="type">text[]</span>,
+  source      <span class="type">text</span> <span class="kw">DEFAULT</span> <span class="str">'ai'</span>,
+  expires_at  <span class="type">timestamptz</span> <span class="kw">DEFAULT</span> now() + <span class="kw">INTERVAL</span> <span class="str">'2 hours'</span>,
+  created_at  <span class="type">timestamptz</span> <span class="kw">DEFAULT</span> now()
+);
+
+<span class="cm">-- ─── CITY ALERTS ───</span>
+<span class="cm">-- Persistent alerts shown on homepage</span>
+<span class="kw">CREATE TABLE</span> <span class="fn">city_alerts</span> (
+  id          <span class="type">uuid</span> <span class="kw">DEFAULT</span> uuid_generate_v4() <span class="kw">PRIMARY KEY</span>,
+  city        <span class="type">text</span> <span class="kw">NOT NULL</span>,
+  type        <span class="type">text</span>,
+  severity    <span class="type">text</span> <span class="kw">DEFAULT</span> <span class="str">'info'</span>,
+  title       <span class="type">text</span>,
+  body        <span class="type">text</span>,
+  active      <span class="type">boolean</span> <span class="kw">DEFAULT</span> <span class="kw">true</span>,
+  expires_at  <span class="type">timestamptz</span>,
+  created_at  <span class="type">timestamptz</span> <span class="kw">DEFAULT</span> now()
+);
+
+<span class="cm">-- ─── FEED POSTS ───</span>
+<span class="cm">-- Community road updates</span>
+<span class="kw">CREATE TABLE</span> <span class="fn">feed_posts</span> (
+  id          <span class="type">bigserial</span> <span class="kw">PRIMARY KEY</span>,
+  content     <span class="type">text</span> <span class="kw">NOT NULL</span>,
+  city        <span class="type">text</span> <span class="kw">NOT NULL</span>,
+  type        <span class="type">text</span> <span class="kw">DEFAULT</span> <span class="str">'general'</span>,
+  username    <span class="type">text</span>,
+  user_id     <span class="type">uuid</span> <span class="kw">REFERENCES</span> auth.users(id),
+  likes       <span class="type">integer</span> <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  moderated   <span class="type">boolean</span> <span class="kw">DEFAULT</span> <span class="kw">false</span>,
+  approved    <span class="type">boolean</span> <span class="kw">DEFAULT</span> <span class="kw">true</span>,
+  created_at  <span class="type">timestamptz</span> <span class="kw">DEFAULT</span> now()
+);
+
+<span class="cm">-- ─── POST LIKES ───</span>
+<span class="kw">CREATE TABLE</span> <span class="fn">post_likes</span> (
+  user_id   <span class="type">uuid</span> <span class="kw">REFERENCES</span> auth.users(id),
+  post_id   <span class="type">bigint</span> <span class="kw">REFERENCES</span> feed_posts(id) <span class="kw">ON DELETE CASCADE</span>,
+  created_at <span class="type">timestamptz</span> <span class="kw">DEFAULT</span> now(),
+  <span class="kw">PRIMARY KEY</span> (user_id, post_id)
+);
+
+<span class="cm">-- ─── FARE INDEX ───</span>
+<span class="cm">-- Aggregated fare data per route (updated by AI agent)</span>
+<span class="kw">CREATE TABLE</span> <span class="fn">fare_index</span> (
+  id              <span class="type">uuid</span> <span class="kw">DEFAULT</span> uuid_generate_v4() <span class="kw">PRIMARY KEY</span>,
+  city            <span class="type">text</span> <span class="kw">NOT NULL</span>,
+  from_area       <span class="type">text</span> <span class="kw">NOT NULL</span>,
+  to_area         <span class="type">text</span> <span class="kw">NOT NULL</span>,
+  transport_mode  <span class="type">text</span> <span class="kw">NOT NULL</span>,
+  avg_fare        <span class="type">integer</span>,
+  min_fare        <span class="type">integer</span>,
+  max_fare        <span class="type">integer</span>,
+  sample_count    <span class="type">integer</span> <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  trend           <span class="type">text</span> <span class="kw">DEFAULT</span> <span class="str">'same'</span>,
+  last_updated    <span class="type">timestamptz</span> <span class="kw">DEFAULT</span> now(),
+  <span class="kw">UNIQUE</span>(city, from_area, to_area, transport_mode)
+);
+
+<span class="cm">-- ─── USER PROFILES ───</span>
+<span class="kw">CREATE TABLE</span> <span class="fn">user_profiles</span> (
+  id           <span class="type">uuid</span> <span class="kw">REFERENCES</span> auth.users(id) <span class="kw">PRIMARY KEY</span>,
+  username     <span class="type">text</span>,
+  home_city    <span class="type">text</span> <span class="kw">DEFAULT</span> <span class="str">'Lagos'</span>,
+  points       <span class="type">integer</span> <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  reports_count <span class="type">integer</span> <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  streak_days  <span class="type">integer</span> <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  last_active  <span class="type">date</span> <span class="kw">DEFAULT</span> CURRENT_DATE,
+  created_at   <span class="type">timestamptz</span> <span class="kw">DEFAULT</span> now()
+);
+
+<span class="cm">-- ─── CHAT LOGS ───</span>
+<span class="kw">CREATE TABLE</span> <span class="fn">chat_logs</span> (
+  id         <span class="type">bigserial</span> <span class="kw">PRIMARY KEY</span>,
+  user_id    <span class="type">uuid</span> <span class="kw">REFERENCES</span> auth.users(id),
+  message    <span class="type">text</span>,
+  response   <span class="type">text</span>,
+  created_at <span class="type">timestamptz</span> <span class="kw">DEFAULT</span> now()
+);
+
+<span class="cm">-- ─── AGENT RUNS LOG ───</span>
+<span class="kw">CREATE TABLE</span> <span class="fn">agent_runs</span> (
+  id          <span class="type">bigserial</span> <span class="kw">PRIMARY KEY</span>,
+  agent_name  <span class="type">text</span>,
+  model       <span class="type">text</span>,
+  tokens_used <span class="type">integer</span>,
+  status      <span class="type">text</span>,
+  output      <span class="type">jsonb</span>,
+  created_at  <span class="type">timestamptz</span> <span class="kw">DEFAULT</span> now()
+);
+
+<span class="cm">-- ─── USEFUL VIEWS ───</span>
+<span class="kw">CREATE VIEW</span> <span class="fn">fare_summary</span> <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+  city,
+  from_area,
+  to_area,
+  transport_mode,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(fare_amount)) <span class="kw">AS</span> avg_fare,
+  <span class="fn">MIN</span>(fare_amount) <span class="kw">AS</span> min_fare,
+  <span class="fn">MAX</span>(fare_amount) <span class="kw">AS</span> max_fare,
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> sample_count
+<span class="kw">FROM</span> fare_reports
+<span class="kw">WHERE</span> created_at > now() - <span class="kw">INTERVAL</span> <span class="str">'30 days'</span>
+<span class="kw">GROUP BY</span> city, from_area, to_area, transport_mode
+<span class="kw">ORDER BY</span> sample_count <span class="kw">DESC</span>;
+
+<span class="cm">-- Auto-create profile on signup</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> <span class="fn">handle_new_user</span>()
+<span class="kw">RETURNS TRIGGER AS</span> $$
+<span class="kw">BEGIN</span>
+  <span class="kw">INSERT INTO</span> public.user_profiles (id, username)
+  <span class="kw">VALUES</span> (NEW.id, <span class="fn">SPLIT_PART</span>(NEW.email, <span class="str">'@'</span>, <span class="num">1</span>));
+  <span class="kw">RETURN</span> NEW;
+<span class="kw">END</span>;
+$$ <span class="kw">LANGUAGE</span> plpgsql <span class="kw">SECURITY DEFINER</span>;
+
+<span class="kw">CREATE TRIGGER</span> on_auth_user_created
+  <span class="kw">AFTER INSERT ON</span> auth.users
+  <span class="kw">FOR EACH ROW EXECUTE</span> <span class="fn">handle_new_user</span>();
+
+<span class="cm">-- Award points on fare report</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> <span class="fn">award_report_points</span>()
+<span class="kw">RETURNS TRIGGER AS</span> $$
+<span class="kw">BEGIN</span>
+  <span class="kw">IF</span> NEW.user_id <span class="kw">IS NOT NULL THEN</span>
+    <span class="kw">UPDATE</span> user_profiles
+    <span class="kw">SET</span>
+      points = points + <span class="num">50</span>,
+      reports_count = reports_count + <span class="num">1</span>
+    <span class="kw">WHERE</span> id = NEW.user_id;
+  <span class="kw">END IF</span>;
+  <span class="kw">RETURN</span> NEW;
+<span class="kw">END</span>;
+$$ <span class="kw">LANGUAGE</span> plpgsql <span class="kw">SECURITY DEFINER</span>;
+
+<span class="kw">CREATE TRIGGER</span> on_fare_report_created
+  <span class="kw">AFTER INSERT ON</span> fare_reports
+  <span class="kw">FOR EACH ROW EXECUTE</span> <span class="fn">award_report_points</span>();
+
+<span class="cm">-- Indexes for performance</span>
+<span class="kw">CREATE INDEX</span> idx_fare_reports_city <span class="kw">ON</span> fare_reports(city);
+<span class="kw">CREATE INDEX</span> idx_fare_reports_route <span class="kw">ON</span> fare_reports(from_area, to_area);
+<span class="kw">CREATE INDEX</span> idx_traffic_city <span class="kw">ON</span> traffic_updates(city, created_at <span class="kw">DESC</span>);
+<span class="kw">CREATE INDEX</span> idx_feed_city <span class="kw">ON</span> feed_posts(city, created_at <span class="kw">DESC</span>);</pre>
+  </div>
+</div>
+
+<!-- RLS -->
+<div class="section" id="rls">
+  <div class="section-title">③ Row Level Security (RLS)</div>
+  <div class="section-sub">RLS ensures users can only read/write their own data. Run this after the schema.</div>
+
+  <div class="code-wrap">
+    <div class="code-label">RLS POLICIES SQL <button class="copy-btn" onclick="copyCode(this,'rls')">COPY</button></div>
+    <pre id="rls"><span class="cm">-- Enable RLS on all tables</span>
+<span class="kw">ALTER TABLE</span> fare_reports <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+<span class="kw">ALTER TABLE</span> traffic_updates <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+<span class="kw">ALTER TABLE</span> city_alerts <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+<span class="kw">ALTER TABLE</span> feed_posts <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+<span class="kw">ALTER TABLE</span> post_likes <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+<span class="kw">ALTER TABLE</span> fare_index <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+<span class="kw">ALTER TABLE</span> user_profiles <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+<span class="kw">ALTER TABLE</span> chat_logs <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="cm">-- fare_reports: anyone can read, authenticated users can insert</span>
+<span class="kw">CREATE POLICY</span> <span class="str">"Public read fare_reports"</span> <span class="kw">ON</span> fare_reports
+  <span class="kw">FOR SELECT USING</span> (<span class="kw">true</span>);
+<span class="kw">CREATE POLICY</span> <span class="str">"Auth users insert fare_reports"</span> <span class="kw">ON</span> fare_reports
+  <span class="kw">FOR INSERT WITH CHECK</span> (auth.uid() IS NOT NULL OR submitted_by = <span class="str">'anonymous'</span>);
+
+<span class="cm">-- traffic_updates: public read</span>
+<span class="kw">CREATE POLICY</span> <span class="str">"Public read traffic"</span> <span class="kw">ON</span> traffic_updates
+  <span class="kw">FOR SELECT USING</span> (<span class="kw">true</span>);
+
+<span class="cm">-- city_alerts: public read active alerts</span>
+<span class="kw">CREATE POLICY</span> <span class="str">"Public read alerts"</span> <span class="kw">ON</span> city_alerts
+  <span class="kw">FOR SELECT USING</span> (active = <span class="kw">true</span>);
+
+<span class="cm">-- feed_posts: public read approved, auth users insert</span>
+<span class="kw">CREATE POLICY</span> <span class="str">"Public read feed"</span> <span class="kw">ON</span> feed_posts
+  <span class="kw">FOR SELECT USING</span> (moderated = <span class="kw">true</span> AND removed = <span class="kw">false</span> AND flagged = <span class="kw">false</span>);
+<span class="kw">CREATE POLICY</span> <span class="str">"Users insert feed"</span> <span class="kw">ON</span> feed_posts
+  <span class="kw">FOR INSERT WITH CHECK</span> (auth.uid() IS NOT NULL);
+<span class="kw">CREATE POLICY</span> <span class="str">"Users update own feed"</span> <span class="kw">ON</span> feed_posts
+  <span class="kw">FOR UPDATE USING</span> (auth.uid() = user_id);
+
+<span class="cm">-- post_likes: users manage their own likes</span>
+<span class="kw">CREATE POLICY</span> <span class="str">"Anyone can view likes"</span> <span class="kw">ON</span> post_likes
+  <span class="kw">FOR SELECT USING</span> (<span class="kw">true</span>);
+<span class="kw">CREATE POLICY</span> <span class="str">"Authenticated users can like"</span> <span class="kw">ON</span> post_likes
+  <span class="kw">FOR INSERT WITH CHECK</span> (auth.uid() = user_id);
+<span class="kw">CREATE POLICY</span> <span class="str">"Users can unlike"</span> <span class="kw">ON</span> post_likes
+  <span class="kw">FOR DELETE USING</span> (auth.uid() = user_id);
+
+<span class="cm">-- fare_index: public read</span>
+<span class="kw">CREATE POLICY</span> <span class="str">"Public read fare index"</span> <span class="kw">ON</span> fare_index
+  <span class="kw">FOR SELECT USING</span> (<span class="kw">true</span>);
+
+<span class="cm">-- user_profiles: public read, users manage own</span>
+<span class="kw">CREATE POLICY</span> <span class="str">"Users can view all profiles"</span> <span class="kw">ON</span> user_profiles
+  <span class="kw">FOR SELECT USING</span> (<span class="kw">true</span>);
+<span class="kw">CREATE POLICY</span> <span class="str">"Users can update own profile"</span> <span class="kw">ON</span> user_profiles
+  <span class="kw">FOR UPDATE USING</span> (auth.uid() = id);
+<span class="kw">CREATE POLICY</span> <span class="str">"Users can insert own profile"</span> <span class="kw">ON</span> user_profiles
+  <span class="kw">FOR INSERT WITH CHECK</span> (auth.uid() = id);
+
+<span class="cm">-- chat_logs: users read own logs</span>
+<span class="kw">CREATE POLICY</span> <span class="str">"Users read own chats"</span> <span class="kw">ON</span> chat_logs
+  <span class="kw">FOR SELECT USING</span> (auth.uid() = user_id);
+<span class="kw">CREATE POLICY</span> <span class="str">"Users insert own chats"</span> <span class="kw">ON</span> chat_logs
+  <span class="kw">FOR INSERT WITH CHECK</span> (auth.uid() = user_id);</pre>
+  </div>
+</div>
+
+<!-- REALTIME -->
+<div class="section" id="realtime">
+  <div class="section-title">④ Enable Realtime</div>
+  <div class="section-sub">Enable Supabase Realtime on tables that need live updates in the browser.</div>
+
+  <div class="step-card">
+    <div class="step-hdr"><div class="step-num">1</div><div class="step-title">Dashboard Method (Easiest)</div></div>
+    <div class="step-body">
+      <p style="font-size:13px;color:var(--ink2);line-height:1.7">Go to <strong style="color:var(--cyan)">Database → Replication</strong> in your Supabase dashboard. Enable replication for: <code style="color:var(--cyan)">fare_reports</code>, <code style="color:var(--cyan)">traffic_updates</code>, <code style="color:var(--cyan)">feed_posts</code>, <code style="color:var(--cyan)">city_alerts</code></p>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label">OR VIA SQL <button class="copy-btn" onclick="copyCode(this,'rt')">COPY</button></div>
+    <pre id="rt"><span class="kw">ALTER PUBLICATION</span> supabase_realtime <span class="kw">ADD TABLE</span>
+  fare_reports, traffic_updates, feed_posts, city_alerts;</pre>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div class="section" id="auth">
+  <div class="section-title">⑤ Auth Configuration</div>
+  <div class="section-sub">Configure magic link auth so users can sign in with just their email — no password needed.</div>
+
+  <div class="step-card">
+    <div class="step-hdr"><div class="step-num">1</div><div class="step-title">Enable Email Auth</div></div>
+    <div class="step-body">
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:10px">Go to <strong style="color:var(--cyan)">Authentication → Providers → Email</strong> and ensure it's enabled with <strong>Magic Links</strong> turned on.</p>
+      <div class="info-box success">✓ Magic links mean users never need a password — they click a link in their email to sign in. Perfect for Nigerian users on mobile.</div>
+    </div>
+  </div>
+
+  <div class="step-card">
+    <div class="step-hdr"><div class="step-num">2</div><div class="step-title">Set Redirect URL</div></div>
+    <div class="step-body">
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:10px">Go to <strong style="color:var(--cyan)">Authentication → URL Configuration</strong> and add your app URL to <strong>Redirect URLs</strong>:</p>
+      <div class="code-wrap"><pre style="font-size:13px">https://your-app.netlify.app
+http://localhost:3000  <span class="cm">← for local testing</span></pre></div>
+    </div>
+  </div>
+</div>
+
+<!-- EDGE FUNCTIONS SETUP -->
+<div class="section" id="edge-setup">
+  <div class="section-title">⑥ Edge Functions CLI Setup</div>
+  <div class="section-sub">Install the Supabase CLI and link your project. Edge Functions run on Deno — no Node.js config needed.</div>
+
+  <div class="code-wrap">
+    <div class="code-label">INSTALL SUPABASE CLI <button class="copy-btn" onclick="copyCode(this,'cli')">COPY</button></div>
+    <pre id="cli"><span class="cm"># Install via npm</span>
+npm install -g supabase
+
+<span class="cm"># Login to Supabase</span>
+supabase login
+
+<span class="cm"># Initialize in your project folder</span>
+mkdir conductor-ai && cd conductor-ai
+supabase init
+
+<span class="cm"># Link to your remote project (get project-ref from dashboard URL)</span>
+supabase link --project-ref YOUR_PROJECT_REF
+
+<span class="cm"># Add your OpenRouter API key as a secret</span>
+supabase secrets set OPENROUTER_API_KEY=sk-or-v1-your-key-here
+
+<span class="cm"># Verify secrets are set</span>
+supabase secrets list</pre>
+  </div>
+
+  <div class="info-box warn">⚠️ <span>Never put your <code>OPENROUTER_API_KEY</code> in frontend code. It must only live as a Supabase secret, accessed only by Edge Functions.</span></div>
+</div>
+
+<!-- EDGE FUNCTION: TRAFFIC -->
+<div class="section" id="edge-traffic">
+  <div class="section-title">⑦ Traffic Agent Edge Function</div>
+  <div class="section-sub">Calls OpenRouter AI to generate traffic updates and saves them to the database. Browsers instantly see the update via Realtime.</div>
+
+  <div class="code-wrap">
+    <div class="code-label">supabase/functions/traffic-agent/index.ts <button class="copy-btn" onclick="copyCode(this,'eftraffic')">COPY</button></div>
+    <pre id="eftraffic"><span class="kw">import</span> { serve } <span class="kw">from</span> <span class="str">"https://deno.land/std@0.168.0/http/server.ts"</span>
+<span class="kw">import</span> { createClient } <span class="kw">from</span> <span class="str">"https://esm.sh/@supabase/supabase-js@2"</span>
+
+<span class="kw">const</span> OPENROUTER_URL = <span class="str">"https://openrouter.ai/api/v1/chat/completions"</span>
+<span class="kw">const</span> MODEL = <span class="str">"meta-llama/llama-3.1-8b-instruct:free"</span>
+
+serve(<span class="kw">async</span> (req) => {
+  <span class="kw">const</span> supabase = createClient(
+    Deno.env.get(<span class="str">"SUPABASE_URL"</span>)!,
+    Deno.env.get(<span class="str">"SUPABASE_SERVICE_ROLE_KEY"</span>)!
+  )
+
+  <span class="kw">const</span> now = <span class="kw">new</span> Date()
+  <span class="kw">const</span> hour = now.getUTCHours() + <span class="num">1</span> <span class="cm">// WAT = UTC+1</span>
+  <span class="kw">const</span> day = now.toLocaleDateString(<span class="str">"en-NG"</span>, { weekday: <span class="str">"long"</span> })
+
+  <span class="kw">const</span> prompt = <span class="str">`
+    Current time in Nigeria: ${hour}:00 WAT, ${day}.
+    Generate realistic traffic updates for Lagos, Abuja, Port Harcourt, Kano, Ibadan.
+    Use real Nigerian road knowledge. For example:
+    - Morning rush (7-9am): Third Mainland, Oshodi, Ojota are always severe
+    - Evening rush (4-7pm): Lekki, VI, Ikorodu are always severe
+    - Friday afternoons: everywhere is worse
+    - Weekends: lighter traffic overall
+
+    Respond ONLY with this JSON (no other text):
+    {
+      "updates": [
+        {
+          "city": "Lagos",
+          "level": "severe",
+          "alert": "Third Mainland Bridge go-slow! Avoid until 9pm",
+          "routes_affected": ["Third Mainland", "Ozumba Mbadiwe"]
+        }
+      ]
+    }
+  `</span>
+
+  <span class="kw">try</span> {
+    <span class="kw">const</span> res = <span class="kw">await</span> fetch(OPENROUTER_URL, {
+      method: <span class="str">"POST"</span>,
+      headers: {
+        <span class="str">"Authorization"</span>: <span class="str">`Bearer ${Deno.env.get("OPENROUTER_API_KEY")}`</span>,
+        <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span>,
+        <span class="str">"HTTP-Referer"</span>: <span class="str">"https://conductor-ai.ng"</span>,
+        <span class="str">"X-Title"</span>: <span class="str">"Conductor AI"</span>
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: <span class="num">600</span>,
+        messages: [{ role: <span class="str">"user"</span>, content: prompt }]
+      })
+    })
+
+    <span class="kw">const</span> data = <span class="kw">await</span> res.json()
+    <span class="kw">const</span> text = data.choices?.[<span class="num">0</span>]?.message?.content || <span class="str">"{}"</span>
+    <span class="kw">const</span> clean = text.replace(<span class="str">/```json\n?|\n?```/g</span>, <span class="str">""</span>).trim()
+    <span class="kw">const</span> parsed = JSON.parse(clean)
+
+    <span class="cm">// Delete old traffic data (keep last 2 hours)</span>
+    <span class="kw">await</span> supabase
+      .from(<span class="str">"traffic_updates"</span>)
+      .delete()
+      .lt(<span class="str">"created_at"</span>, <span class="kw">new</span> Date(Date.now() - <span class="num">2</span> * <span class="num">60</span> * <span class="num">60</span> * <span class="num">1000</span>).toISOString())
+
+    <span class="cm">// Insert new traffic updates</span>
+    <span class="kw">const</span> { error } = <span class="kw">await</span> supabase
+      .from(<span class="str">"traffic_updates"</span>)
+      .insert(parsed.updates.map((u: <span class="kw">any</span>) => ({
+        city: u.city,
+        level: u.level,
+        alert: u.alert,
+        routes_affected: u.routes_affected,
+        source: <span class="str">"ai"</span>
+      })))
+
+    <span class="cm">// Log the agent run</span>
+    <span class="kw">await</span> supabase.from(<span class="str">"agent_runs"</span>).insert({
+      agent_name: <span class="str">"traffic-agent"</span>,
+      model: MODEL,
+      tokens_used: data.usage?.total_tokens || <span class="num">0</span>,
+      status: error ? <span class="str">"error"</span> : <span class="str">"success"</span>,
+      output: parsed
+    })
+
+    <span class="kw">return new</span> Response(
+      JSON.stringify({ success: !error, updates: parsed.updates?.length }),
+      { headers: { <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span> } }
+    )
+  } <span class="kw">catch</span> (err) {
+    <span class="kw">return new</span> Response(
+      JSON.stringify({ error: err.message }),
+      { status: <span class="num">500</span>, headers: { <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span> } }
+    )
+  }
+})</pre>
+  </div>
+</div>
+
+<!-- EDGE FUNCTION: FARE -->
+<div class="section" id="edge-fare">
+  <div class="section-title">⑧ Fare Updater Edge Function</div>
+  <div class="section-sub">Reads recent fare reports from the DB and uses AI to update the Fare Index with averages and trends.</div>
+
+  <div class="code-wrap">
+    <div class="code-label">supabase/functions/fare-agent/index.ts <button class="copy-btn" onclick="copyCode(this,'effare')">COPY</button></div>
+    <pre id="effare"><span class="kw">import</span> { serve } <span class="kw">from</span> <span class="str">"https://deno.land/std@0.168.0/http/server.ts"</span>
+<span class="kw">import</span> { createClient } <span class="kw">from</span> <span class="str">"https://esm.sh/@supabase/supabase-js@2"</span>
+
+<span class="kw">const</span> MODEL = <span class="str">"google/gemma-2-9b-it:free"</span>
+
+serve(<span class="kw">async</span> () => {
+  <span class="kw">const</span> supabase = createClient(
+    Deno.env.get(<span class="str">"SUPABASE_URL"</span>)!,
+    Deno.env.get(<span class="str">"SUPABASE_SERVICE_ROLE_KEY"</span>)!
+  )
+
+  <span class="cm">// Get recent fare reports from the last 7 days</span>
+  <span class="kw">const</span> { data: reports } = <span class="kw">await</span> supabase
+    .from(<span class="str">"fare_reports"</span>)
+    .select(<span class="str">"city, from_area, to_area, transport_mode, fare_amount, time_slot"</span>)
+    .gt(<span class="str">"created_at"</span>, <span class="kw">new</span> Date(Date.now() - <span class="num">7</span> * <span class="num">24</span> * <span class="num">60</span> * <span class="num">60</span> * <span class="num">1000</span>).toISOString())
+    .limit(<span class="num">100</span>)
+
+  <span class="kw">if</span> (!reports?.length) {
+    <span class="kw">return new</span> Response(JSON.stringify({ message: <span class="str">"No recent reports"</span> }))
+  }
+
+  <span class="kw">const</span> prompt = <span class="str">`
+    You are a Nigerian transport fare analyst. Here are recent fare reports:
+    ${JSON.stringify(reports)}
+
+    Analyze these reports and identify:
+    1. Routes where fares have changed significantly
+    2. Which transport modes are most expensive right now
+    3. Any surge patterns (rush hour, fuel scarcity, etc.)
+
+    Respond ONLY with this JSON:
+    {
+      "fare_updates": [
+        {
+          "city": "Lagos",
+          "from_area": "Lekki",
+          "to_area": "Victoria Island",
+          "transport_mode": "uber",
+          "avg_fare": 3500,
+          "min_fare": 2800,
+          "max_fare": 5000,
+          "trend": "up",
+          "reason": "Surge due to rain"
+        }
+      ],
+      "summary": "Brief summary of fare trends"
+    }
+  `</span>
+
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">"https://openrouter.ai/api/v1/chat/completions"</span>, {
+    method: <span class="str">"POST"</span>,
+    headers: {
+      <span class="str">"Authorization"</span>: <span class="str">`Bearer ${Deno.env.get("OPENROUTER_API_KEY")}`</span>,
+      <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span>,
+      <span class="str">"HTTP-Referer"</span>: <span class="str">"https://conductor-ai.ng"</span>
+    },
+    body: JSON.stringify({ model: MODEL, max_tokens: <span class="num">800</span>, messages: [{ role: <span class="str">"user"</span>, content: prompt }] })
+  })
+
+  <span class="kw">const</span> data = <span class="kw">await</span> res.json()
+  <span class="kw">const</span> text = data.choices?.[<span class="num">0</span>]?.message?.content || <span class="str">"{}"</span>
+  <span class="kw">const</span> parsed = JSON.parse(text.replace(<span class="str">/```json\n?|\n?```/g</span>, <span class="str">""</span>).trim())
+
+  <span class="cm">// Upsert fare index (update or insert per route)</span>
+  <span class="kw">for</span> (<span class="kw">const</span> update <span class="kw">of</span> parsed.fare_updates || []) {
+    <span class="kw">await</span> supabase.from(<span class="str">"fare_index"</span>).upsert({
+      city: update.city,
+      from_area: update.from_area,
+      to_area: update.to_area,
+      transport_mode: update.transport_mode,
+      avg_fare: update.avg_fare,
+      min_fare: update.min_fare,
+      max_fare: update.max_fare,
+      trend: update.trend,
+      last_updated: <span class="kw">new</span> Date().toISOString()
+    }, { onConflict: <span class="str">"city,from_area,to_area,transport_mode"</span> })
+  }
+
+  <span class="kw">return new</span> Response(
+    JSON.stringify({ success: <span class="kw">true</span>, updated: parsed.fare_updates?.length }),
+    { headers: { <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span> } }
+  )
+})</pre>
+  </div>
+</div>
+
+<!-- EDGE FUNCTION: ALERTS -->
+<div class="section" id="edge-alerts">
+  <div class="section-title">⑨ Alert Generator Edge Function</div>
+  <div class="section-sub">Generates city alerts and moderates community feed posts using free AI models.</div>
+
+  <div class="code-wrap">
+    <div class="code-label">supabase/functions/alerts-agent/index.ts <button class="copy-btn" onclick="copyCode(this,'efalert')">COPY</button></div>
+    <pre id="efalert"><span class="kw">import</span> { serve } <span class="kw">from</span> <span class="str">"https://deno.land/std@0.168.0/http/server.ts"</span>
+<span class="kw">import</span> { createClient } <span class="kw">from</span> <span class="str">"https://esm.sh/@supabase/supabase-js@2"</span>
+
+serve(<span class="kw">async</span> () => {
+  <span class="kw">const</span> supabase = createClient(
+    Deno.env.get(<span class="str">"SUPABASE_URL"</span>)!,
+    Deno.env.get(<span class="str">"SUPABASE_SERVICE_ROLE_KEY"</span>)!
+  )
+
+  <span class="cm">// Step 1: Moderate unmoderated feed posts</span>
+  <span class="kw">const</span> { data: posts } = <span class="kw">await</span> supabase
+    .from(<span class="str">"feed_posts"</span>)
+    .select(<span class="str">"id, content"</span>)
+    .eq(<span class="str">"moderated"</span>, <span class="kw">false</span>)
+    .limit(<span class="num">10</span>)
+
+  <span class="kw">if</span> (posts?.length) {
+    <span class="kw">const</span> modPrompt = <span class="str">`
+      Moderate these Nigerian transport app community posts.
+      Remove spam, scams, profanity, and off-topic content.
+      Keep road updates, fare reports, and helpful info.
+
+      Posts: ${JSON.stringify(posts.map(p => ({ id: p.id, text: p.content })))}
+
+      Respond ONLY with JSON:
+      {"results": [{"id": 1, "approve": true, "reason": "Valid traffic update"}]}
+    `</span>
+
+    <span class="kw">const</span> modRes = <span class="kw">await</span> fetch(<span class="str">"https://openrouter.ai/api/v1/chat/completions"</span>, {
+      method: <span class="str">"POST"</span>,
+      headers: {
+        <span class="str">"Authorization"</span>: <span class="str">`Bearer ${Deno.env.get("OPENROUTER_API_KEY")}`</span>,
+        <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span>
+      },
+      body: JSON.stringify({
+        model: <span class="str">"mistralai/mistral-7b-instruct:free"</span>,
+        max_tokens: <span class="num">400</span>,
+        messages: [{ role: <span class="str">"user"</span>, content: modPrompt }]
+      })
+    })
+
+    <span class="kw">const</span> modData = <span class="kw">await</span> modRes.json()
+    <span class="kw">const</span> modText = modData.choices?.[<span class="num">0</span>]?.message?.content || <span class="str">"{}"</span>
+    <span class="kw">const</span> modResult = JSON.parse(modText.replace(<span class="str">/```json\n?|\n?```/g</span>, <span class="str">""</span>).trim())
+
+    <span class="cm">// Apply moderation decisions</span>
+    <span class="kw">for</span> (<span class="kw">const</span> result <span class="kw">of</span> modResult.results || []) {
+      <span class="kw">await</span> supabase.from(<span class="str">"feed_posts"</span>).update({
+        approved: result.approve,
+        moderated: <span class="kw">true</span>
+      }).eq(<span class="str">"id"</span>, result.id)
+    }
+  }
+
+  <span class="cm">// Step 2: Generate new city alerts</span>
+  <span class="kw">const</span> hour = <span class="kw">new</span> Date().getUTCHours() + <span class="num">1</span>
+  <span class="kw">const</span> alertPrompt = <span class="str">`
+    Generate 2-3 actionable road alerts for Nigerian cities at ${hour}:00 WAT.
+    Be realistic based on Nigerian road patterns.
+
+    Respond ONLY with JSON:
+    {
+      "alerts": [
+        {
+          "city": "Lagos",
+          "type": "traffic",
+          "severity": "warning",
+          "title": "Oshodi Go-Slow",
+          "body": "Heavy traffic on Oshodi-Apapa expressway. Use alternative routes.",
+          "expires_hours": 3
+        }
+      ]
+    }
+  `</span>
+
+  <span class="kw">const</span> alertRes = <span class="kw">await</span> fetch(<span class="str">"https://openrouter.ai/api/v1/chat/completions"</span>, {
+    method: <span class="str">"POST"</span>,
+    headers: {
+      <span class="str">"Authorization"</span>: <span class="str">`Bearer ${Deno.env.get("OPENROUTER_API_KEY")}`</span>,
+      <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span>
+    },
+    body: JSON.stringify({
+      model: <span class="str">"qwen/qwen-2-7b-instruct:free"</span>,
+      max_tokens: <span class="num">500</span>,
+      messages: [{ role: <span class="str">"user"</span>, content: alertPrompt }]
+    })
+  })
+
+  <span class="kw">const</span> alertData = <span class="kw">await</span> alertRes.json()
+  <span class="kw">const</span> alertText = alertData.choices?.[<span class="num">0</span>]?.message?.content || <span class="str">"{}"</span>
+  <span class="kw">const</span> alertParsed = JSON.parse(alertText.replace(<span class="str">/```json\n?|\n?```/g</span>, <span class="str">""</span>).trim())
+
+  <span class="cm">// Deactivate old alerts</span>
+  <span class="kw">await</span> supabase.from(<span class="str">"city_alerts"</span>)
+    .update({ active: <span class="kw">false</span> })
+    .lt(<span class="str">"expires_at"</span>, <span class="kw">new</span> Date().toISOString())
+
+  <span class="cm">// Insert new alerts</span>
+  <span class="kw">await</span> supabase.from(<span class="str">"city_alerts"</span>).insert(
+    (alertParsed.alerts || []).map((a: <span class="kw">any</span>) => ({
+      city: a.city,
+      type: a.type,
+      severity: a.severity,
+      title: a.title,
+      body: a.body,
+      active: <span class="kw">true</span>,
+      expires_at: <span class="kw">new</span> Date(Date.now() + (a.expires_hours || <span class="num">2</span>) * <span class="num">3600000</span>).toISOString()
+    }))
+  )
+
+  <span class="kw">return new</span> Response(JSON.stringify({ success: <span class="kw">true</span> }), {
+    headers: { <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span> }
+  })
+})</pre>
+  </div>
+</div>
+
+<!-- CRON -->
+<div class="section" id="edge-cron">
+  <div class="section-title">⑩ Cron Schedule (pg_cron)</div>
+  <div class="section-sub">Schedule your Edge Functions to run automatically — no server needed. Run this SQL in the SQL Editor.</div>
+
+  <div class="code-wrap">
+    <div class="code-label">CRON JOBS SQL <button class="copy-btn" onclick="copyCode(this,'cron')">COPY</button></div>
+    <pre id="cron"><span class="cm">-- Traffic agent: every 30 minutes</span>
+<span class="kw">SELECT</span> cron.schedule(
+  <span class="str">'traffic-agent-30min'</span>,
+  <span class="str">'*/30 * * * *'</span>,
+  <span class="str">$$
+    SELECT net.http_post(
+      url := current_setting('app.supabase_url') || '/functions/v1/traffic-agent',
+      headers := jsonb_build_object(
+        'X-CRON-SECRET', current_setting('app.cron_secret'),
+        'Content-Type', 'application/json'
+      ),
+      body := '{}'::jsonb
+    );
+  $$</span>
+);
+
+<span class="cm">-- Fare agent: every 2 hours</span>
+<span class="kw">SELECT</span> cron.schedule(
+  <span class="str">'fare-agent-2hr'</span>,
+  <span class="str">'0 */2 * * *'</span>,
+  <span class="str">$$
+    SELECT net.http_post(
+      url := current_setting('app.supabase_url') || '/functions/v1/fare-agent',
+      headers := jsonb_build_object(
+        'X-CRON-SECRET', current_setting('app.cron_secret'),
+        'Content-Type', 'application/json'
+      ),
+      body := '{}'::jsonb
+    );
+  $$</span>
+);
+
+<span class="cm">-- Alert + moderation agent: every hour</span>
+<span class="kw">SELECT</span> cron.schedule(
+  <span class="str">'alerts-agent-1hr'</span>,
+  <span class="str">'0 * * * *'</span>,
+  <span class="str">$$
+    SELECT net.http_post(
+      url := current_setting('app.supabase_url') || '/functions/v1/alerts-agent',
+      headers := jsonb_build_object(
+        'X-CRON-SECRET', current_setting('app.cron_secret'),
+        'Content-Type', 'application/json'
+      ),
+      body := '{}'::jsonb
+    );
+  $$</span>
+);
+
+<span class="cm">-- Clean up old data: daily at 2am WAT (1am UTC)</span>
+<span class="kw">SELECT</span> cron.schedule(
+  <span class="str">'daily-cleanup'</span>,
+  <span class="str">'0 1 * * *'</span>,
+  <span class="str">$$
+    DELETE FROM traffic_updates WHERE created_at < now() - INTERVAL '24 hours';
+    DELETE FROM city_alerts WHERE expires_at < now() - INTERVAL '1 hour';
+    DELETE FROM chat_logs WHERE created_at < now() - INTERVAL '30 days';
+  $$</span>
+);
+
+<span class="cm">-- View all scheduled jobs</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> cron.job;</pre>
+  </div>
+  <div class="info-box tip">💡 pg_cron uses UTC time. Nigeria is UTC+1 (WAT). So <code>9am WAT = 8am UTC</code>. Adjust cron times accordingly for Nigerian rush hours.</div>
+</div>
+
+<!-- DEPLOY -->
+<div class="section" id="deploy">
+  <div class="section-title">⑪ Deploy Edge Functions & Go Live</div>
+  <div class="section-sub">Deploy all functions and launch the app.</div>
+
+  <div class="code-wrap">
+    <div class="code-label">DEPLOY COMMANDS <button class="copy-btn" onclick="copyCode(this,'deploy')">COPY</button></div>
+    <pre id="deploy"><span class="cm"># Deploy all Edge Functions at once</span>
+supabase functions deploy traffic-agent
+supabase functions deploy fare-agent
+supabase functions deploy alerts-agent
+supabase functions deploy moderator-agent
+supabase functions deploy content-agent
+supabase functions deploy chat
+supabase functions deploy admin-stats
+supabase functions deploy admin-users
+supabase functions deploy admin-fares
+supabase functions deploy admin-content
+supabase functions deploy admin-alerts
+supabase functions deploy admin-feed
+
+<span class="cm"># Test a function manually</span>
+supabase functions invoke traffic-agent --no-verify-jwt
+
+<span class="cm"># Check function logs</span>
+supabase functions logs traffic-agent
+
+<span class="cm"># Set app URL and cron secret for pg_cron</span>
+<span class="cm"># (Replace with your actual values)</span>
+<span class="kw">ALTER</span> DATABASE postgres <span class="kw">SET</span> app.supabase_url = <span class="str">'https://xxxx.supabase.co'</span>;
+<span class="kw">ALTER</span> DATABASE postgres <span class="kw">SET</span> app.cron_secret = <span class="str">'your-long-random-secret'</span>;</pre>
+  </div>
+
+  <div class="step-card">
+    <div class="step-hdr"><div class="step-num">🌍</div><div class="step-title">Host the HTML App (Free)</div></div>
+    <div class="step-body">
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Deploy <code>app-live.html</code> (and the rest of the repo static files) to any static host:</p>
+      <div class="code-wrap"><pre><span class="cm"># Option 1: Netlify Drop (easiest — drag and drop)</span>
+<span class="cm"># Go to netlify.com/drop and drag your HTML file</span>
+
+<span class="cm"># Option 2: Vercel CLI</span>
+npm i -g vercel
+vercel deploy .
+
+<span class="cm"># Option 3: GitHub Pages</span>
+<span class="cm"># Push to GitHub → Settings → Pages → Deploy from main branch</span></pre></div>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKLIST -->
+<div class="section" id="checklist">
+  <div class="section-title">⑫ Final Checklist</div>
+  <div class="section-sub">Before sharing the app with users, verify everything is working.</div>
+
+  <ul class="checklist">
+    <li><span class="check">✓</span> Supabase project created and database password saved</li>
+    <li><span class="check">✓</span> All SQL schema tables created successfully</li>
+    <li><span class="check">✓</span> RLS policies applied to all tables</li>
+    <li><span class="check">✓</span> Realtime enabled for fare_reports, traffic_updates, feed_posts</li>
+    <li><span class="check">✓</span> Auth configured with magic link enabled</li>
+    <li><span class="check">✓</span> OpenRouter API key added as Supabase secret</li>
+    <li><span class="check">✓</span> All 3 Edge Functions deployed successfully</li>
+    <li><span class="check">✓</span> Cron jobs scheduled (check cron.job table)</li>
+    <li><span class="check">✓</span> traffic-agent tested manually and returns traffic data</li>
+    <li><span class="check">✓</span> App HTML deployed to Netlify/Vercel with public URL</li>
+    <li><span class="check">✓</span> Supabase URL + anon key entered in app setup modal</li>
+    <li><span class="check">✓</span> Fare report submitted → appears in fare_reports table</li>
+    <li><span class="check">✓</span> Community post submitted → appears in feed_posts table</li>
+    <li><span class="check">✓</span> Realtime tested: open 2 browser tabs, post in one, see it in other</li>
+  </ul>
+
+  <div class="info-box success">✅ <div><strong>You're live!</strong> Share the URL on WhatsApp, Twitter/X, and with Nigerian transport groups. The AI agents will automatically update traffic and fares every 30 minutes.</div></div>
+  <div class="info-box tip">💡 <strong>Free tier capacity:</strong> Supabase free tier supports ~50,000 monthly active users, 2M Edge Function calls, and 500MB database. This is enough to grow to thousands of Nigerian users before needing to upgrade.</div>
+</div>
+
+</div><!-- end main -->
+</div><!-- end layout -->
+
+<script>
+// Progress bar
+window.addEventListener('scroll',()=>{
+  const total=document.body.scrollHeight-window.innerHeight;
+  const pct=Math.round((window.scrollY/total)*100);
+  document.getElementById('progBar').style.width=pct+'%';
+});
+
+// Copy code
+function copyCode(btn,id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  navigator.clipboard.writeText(el.innerText||el.textContent).then(()=>{
+    btn.textContent='COPIED!';btn.className='copy-btn copied';
+    const t=document.getElementById('toast');t.style.display='block';
+    setTimeout(()=>{btn.textContent='COPY';btn.className='copy-btn';t.style.display='none'},2000);
+  });
+}
+
+// Active nav
+function setActive(el){
+  document.querySelectorAll('.snav-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// Observe sections for active state
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const id=e.target.id;
+      document.querySelectorAll('.snav-item').forEach(i=>{
+        i.classList.toggle('active',i.getAttribute('href')==='#'+id);
+      });
+    }
+  });
+},{threshold:0.3,rootMargin:'-80px 0px 0px 0px'});
+
+document.querySelectorAll('.section').forEach(s=>observer.observe(s));
+</script>
+</body>
+</html>
